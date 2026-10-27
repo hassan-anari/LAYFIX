@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Layfix.App/Layfix.App.csproj" />
+    <Project Path="src/Layfix.Core/Layfix.Core.csproj" />
+    <Project Path="src/Layfix.Windows/Layfix.Windows.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Layfix.Core.Tests/Layfix.Core.Tests.csproj" />
+    <Project Path="tests/Layfix.Windows.Tests/Layfix.Windows.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -22,3 +22,7 @@ dotnet_diagnostic.CA2000.severity = warning
 
 [*.md]
 trim_trailing_whitespace = false
+
+[docs/licenses/**]
+insert_final_newline = false
+trim_trailing_whitespace = false

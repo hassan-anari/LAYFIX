@@ -18,3 +18,8 @@ For every reused artifact record: upstream repository, upstream commit hash and 
 ## Current bootstrap state
 
 No external source files, fonts, images, trademarks, code snippets or word lists have been copied. This document records design inspiration only.
+
+## Phase 1 inspection
+
+- LayoutFixer commit `12e0085b1347d8e3bd09e00ed42f04203f06d882`: reviewed `Sources/main.swift` layout enumeration/selection and `Popup` nonactivating NSPanel. Carbon/TIS semantics are not portable to Windows; the keyboard tap, dictionaries, text deletion and retyping are outside Phase 1 and were not reused.
+- Filee commit `3f790fb2460e44a449caf7c416ffb7a74362421c`: reviewed `src/Filee.App/Views/RadialWindow.axaml`, `Services/TransparentWindows.cs`, `Services/ThemeService.cs`, `Services/SoftPalette.cs`, `src/Filee.Platform.Windows/WindowsPlatformServices.cs`, its native declarations, and app project packaging. LAYFIX independently uses supported Avalonia window styles, platform colors, tray and backdrop APIs. No Filee source, conversion engines, dependencies unique to Filee, or artwork was imported.

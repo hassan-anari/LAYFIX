@@ -4,7 +4,7 @@
 
 Green GitHub Actions means *only* that the checks actually run passed. Windows GitHub-hosted runners do not prove real interactive keyboard behavior, non-activating overlays, TSF switching, multi-display composition or editor compatibility.
 
-Before Phase 1 contains projects, CI is **bootstrap/docs-only**; do not refer to it as a passing .NET build. Once Layfix.slnx exists, a failure in restore/build/test or publish is a blocker.
+Phase 1 CI now restores locked dependencies, builds all projects in Release, runs nonzero deterministic tests and read-only native smoke, verifies self-contained packaging and launches the published process for a lifecycle smoke test. A failure in restore/build/test/publish/launch is a blocker. Interactive editor behavior is a separate NOT RUN gate.
 
 ## Automated test layers
 

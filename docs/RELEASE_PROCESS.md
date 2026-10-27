@@ -2,7 +2,7 @@
 
 ## Status
 
-Initial repo contains only specifications and CI bootstrap. No executable, installer, signing key or GitHub Release is produced yet.
+Phase 1 builds an unsigned self-contained portable preview through PR CI. No installer, signing key, tag, GitHub Release or deployment is produced. A preview artifact is not production approval; see PHASE1_VALIDATION.md.
 
 ## Phase 1 distribution (unsigned preview)
 

@@ -1,0 +1,7 @@
+LAYFIX 0.1.0 preview — unsigned Windows x64 portable build
+Extract the entire directory and run Layfix.App.exe. No .NET installation is required.
+This is a development preview, not a production release. Windows interactive compatibility is not established by CI.
+Settings: %LOCALAPPDATA%\LAYFIX\settings.json
+No typed text, clipboard access, telemetry, correction, startup registration or elevated privileges.
+Project license remains undecided; this preview grants no redistribution rights to original LAYFIX code.
+See THIRD_PARTY_NOTICES.md and https://github.com/hassan-anari/LAYFIX for validation and limitations.

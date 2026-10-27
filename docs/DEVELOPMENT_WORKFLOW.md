@@ -12,9 +12,9 @@
 
 ## CI contract
 
-**Bootstrap:** docs-contract check and Windows job explicitly report no solution yet; no claims of a successful C# build/test.
+**Phase 0 baseline:** documentation contract only. Phase 1 replaces conditional bootstrap checks with mandatory application gates.
 
-**After Phase 1 skeleton:** .github/workflows/ci.yml performs Windows-hosted .NET 10 restore, Release build, unit tests and self-contained win-x64 publish, then uploads a portable zip artifact. The Windows job must fail if a solution exists but tests/build/publish fail. Tests requiring interactive foreground windows are not assumed covered.
+**Phase 1:** .github/workflows/ci.yml performs Windows-hosted .NET 10 restore, Release build, unit tests and self-contained win-x64 publish, then uploads a portable zip artifact. The Windows job must fail if a solution exists but tests/build/publish fail. Tests requiring interactive foreground windows are not assumed covered.
 
 **Later:** add explicit release workflow for signed/tagged releases, Installer verification, checksums, SBOM and updater requirements. Never publish from PR events; never expose credentials to untrusted changes.
 

@@ -1,51 +1,44 @@
 # LAYFIX
 
-**Status: specification and repository bootstrap; no application has been implemented yet.**
+LAYFIX Phase 1 is an unsigned Windows 10/11 x64 preview of an offline English/Persian language indicator and switcher. It uses .NET 10, Avalonia and isolated Win32 APIs. It does not capture keystrokes or typed text, access the clipboard, correct text, or call a cloud service.
 
-LAYFIX is a planned privacy-first, Windows-native English/Persian keyboard layout assistant. It combines (1) a floating input-language indicator with click-to-switch and (2) conservative, user-confirmed recovery of text typed under the wrong keyboard layout.
+The compact floating FA/EN pill observes the foreground/focused Windows thread. Clicking requests one language change for that captured target, then verifies readback. Unknown, unsupported, unavailable and paused states are explicit. The widget uses non-activating native styles, is draggable, and remembers a bounded on-screen position. Interactive editor compatibility remains **NOT RUN** until the [Windows validation matrix](docs/PHASE1_VALIDATION.md) is completed.
 
-## Product principles
+## Download the portable preview
 
-- Works offline for all core keyboard functionality; no cloud AI, typing telemetry, or raw keystroke logging.
-- Reads the effective input language of the **target/focused Windows application**, not merely LAYFIX's own thread.
-- Displays a draggable, non-activating floating FA/EN switcher without stealing typing focus.
-- Offers exact, layout-aware, reversible-in-principle correction only when safe; never silently destroys text.
-- Supports Windows 11 Mica/Acrylic where possible and graceful Windows 10/disabled-transparency fallback.
-- Inherits the system accent and light/dark preference by default; allows user overrides.
-- Exposes controls, application exclusions, accessibility, diagnostics, startup, and pause/exit in the app.
-- Uses Codex + Draft PRs + GitHub Actions for changes, tests, and self-contained Windows builds.
+Open the [Phase 1 Draft PR](https://github.com/hassan-anari/LAYFIX/pull/2), select its latest successful CI run, and download **LAYFIX-win-x64-portable**. Extract the artifact, then extract `LAYFIX-win-x64-portable.zip` completely and run **Layfix.App.exe**. Keep its DLLs and runtime alongside it. No .NET SDK or runtime installation is required. This is an unsigned development artifact with limited retention, not a production Release or installer.
 
-## Planned stack
+## Use
 
-C# / .NET 10 / Avalonia UI, with Windows APIs (Win32, UI Automation, TSF as needed) behind testable abstractions. The planned solution is **Layfix.slnx**, with projects in **src/** and tests in **tests/**. No application source files exist yet.
+- Click the pill to toggle the captured English/Persian target; drag it to move. An exclamation mark means the latest switch failed or was cancelled; hover or open Keyboard settings for the reason.
+- Use the tray to open Settings, hide/show the widget, pause/resume observation, or exit. Closing Settings keeps the resident app running. A second launch opens the existing instance's Settings.
+- Settings provide English/Persian UI with RTL, System/Light/Dark theme, Windows accent or a custom color, glass/opaque preference, surface opacity, scale, drag lock, topmost behavior, target variants and reset controls.
+- Settings live at `%LOCALAPPDATA%\LAYFIX\settings.json`. Malformed preferences recover to safe defaults; newer schemas are not overwritten. No observed language/window/input state is persisted.
 
-## Specifications and operating rules
+Windows/system accessibility settings take precedence over glass/custom appearance. Unsupported native effects use an opaque surface. Launch-at-login is deferred; the preview never changes Windows' configured languages or startup entries.
 
-- [Codex rules](AGENTS.md)
-- [Product specification](docs/PRODUCT_SPEC.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Visual design and customization](docs/DESIGN_SYSTEM.md)
-- [Roadmap and phase gates](docs/ROADMAP.md)
-- [Tests and quality gates](docs/QUALITY_GATES.md)
-- [Security and privacy](docs/SECURITY_PRIVACY.md)
-- [Development workflow](docs/DEVELOPMENT_WORKFLOW.md)
-- [Release process](docs/RELEASE_PROCESS.md)
-- [Technical decisions](docs/DECISIONS.md)
-- [Reference projects and third-party licenses](docs/REFERENCE_REPOS.md)
+## Build and test
 
-## Repository status and CI
+```powershell
+dotnet restore Layfix.slnx --locked-mode
+dotnet build Layfix.slnx -c Release --no-restore
+dotnet test Layfix.slnx -c Release --no-build --no-restore --logger "trx;LogFileName=test-results.trx"
+./build/package.ps1
+./build/smoke-portable.ps1
+```
 
-The repository bootstrap CI currently checks required documentation. **When Layfix.slnx is added in Phase 1**, the Windows job will restore, build, run tests, and, when the app project exists, publish a self-contained Windows x64 portable ZIP as a GitHub Actions artifact. A successful bootstrap check is **not** a claim that an executable was built or tested.
+Use SDK 10.0.403 (global.json). CI preserves documentation checks, builds all five projects, runs nonzero tests and real read-only Win32 smoke, publishes a self-contained directory, verifies native/runtime files, checks published-process lifecycle, and uploads the ZIP/TRX outputs. On non-Windows exclude `Category=NativeSmoke`; this is an excluded Windows test, not a desktop pass. No headless CI check proves focus preservation in Chrome, VS Code, Notepad or Telegram.
 
-Installers, signing, tagged release automation, and in-app updates are later-phase deliverables. Nothing is automatically merged, deployed, or publicly released.
+## Architecture and limits
 
-## External inspiration
+`Layfix.slnx` contains `src/Layfix.App` (UI/composition/tray), `src/Layfix.Core` (state/settings/rules), `src/Layfix.Windows` (Win32/adapters), and matching Core/Windows test projects. See [implementation](docs/PHASE1_IMPLEMENTATION.md), [architecture](docs/ARCHITECTURE.md), [decisions](docs/DECISIONS.md), [design](docs/DESIGN_SYSTEM.md), [quality gates](docs/QUALITY_GATES.md), [privacy](docs/SECURITY_PRIVACY.md), [workflow](docs/DEVELOPMENT_WORKFLOW.md), and [release rules](docs/RELEASE_PROCESS.md).
 
-- [LayoutFixer](https://github.com/sina-developer/LayoutFixer) — macOS keyboard layout mistake detection and Tab-confirmation concept.
-- [Filee](https://github.com/KnifeLemon/Filee) — C# / Avalonia interface, native-feeling floating windows, theming and tray patterns.
+Conventional focused-thread HKLs are supported. Foreign TSF profiles cannot universally be verified through a different process's thread manager. IMEs, elevated/inaccessible apps, secure desktops, remote sessions and conflicting thread state fail closed. See the validation matrix for focus-race and timeout limits. Exclusive fullscreen overlay visibility is controlled by Windows. Compatibility and resource/latency measurements require real Windows testing.
 
-See [references and licensing](docs/REFERENCE_REPOS.md). No third-party code, dictionaries, or visual assets are imported during bootstrap.
+Phase 2–4 conversion, dictionaries, suggestions, text hooks, installers, signing, updates and production Releases are not implemented. The PR remains Draft and must not be merged or released automatically.
 
-## License
+## References and license
 
-**Undecided for LAYFIX.** Public repository visibility does not grant unrestricted reuse rights. Choose an explicit project license before distributing or accepting external contributions; preserve all applicable third-party notices.
+[LayoutFixer](https://github.com/sina-developer/LayoutFixer) and [Filee](https://github.com/KnifeLemon/Filee) were technical/design references only. No source, artwork or dictionaries were copied. See [provenance](docs/REFERENCE_REPOS.md) and [third-party notices](THIRD_PARTY_NOTICES.md).
+
+Original LAYFIX license is **undecided**. Public visibility and this owner-requested preview do not grant redistribution rights. Preserve bundled dependency licenses.

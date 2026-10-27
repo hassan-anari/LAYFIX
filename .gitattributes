@@ -12,3 +12,6 @@
 *.webp binary
 *.zip binary
 *.exe binary
+
+# Preserve upstream license/notice bytes, including original whitespace and line endings.
+docs/licenses/** -text whitespace=-blank-at-eol,-blank-at-eof

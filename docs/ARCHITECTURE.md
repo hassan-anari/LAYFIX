@@ -77,3 +77,18 @@ Do not introduce empty or fake buildable projects in bootstrap; create them in P
 6. **Transparent surface compatibility**: solid fallback, native smoke tests, reduced effects.
 
 Use [Quality Gates](QUALITY_GATES.md) for test strategy and [Decisions](DECISIONS.md) for unresolved choices.
+
+## Implemented Phase 1 boundary
+
+The solution now implements the three production projects and two test projects above. Later-phase components remain descriptions, not implemented features.
+
+- `LanguageStateService` owns serialized observations and a bounded switch state machine. The App dispatches notifications to the UI thread. `LanguageObservationWorker` coalesces foreground/focus events into a capacity-one channel; a 750 ms timer reconciles foreign language changes that do not produce a cross-process notification. It never sends requests on a timer.
+- `WindowsLanguagePlatform` uses an injectable `IWindowsInputApi`. `Win32InputApi` resolves foreground/focused HWNDs, their processes and threads, compares cross-thread HKLs, checks desktop/session/integrity eligibility, and sends a single timeout-bounded language request. The platform observer has its own STA message loop, three out-of-context WinEvent registrations and a hidden session/power/appearance broadcast window.
+- Context identity includes a native event generation; a foreground/focus event invalidates a captured switch even when the user returns to the same target. Immediately before the request the adapter rechecks target identity and source HKL. Readback checks the same identity for at most 800 ms. Acknowledged message delivery is never success. There is no AttachThreadInput, SetForegroundWindow, ActivateKeyboardLayout, SendInput or keyboard hook.
+- Standard keyboard HKLs are the observable contract. ImmIsIME/E-prefixed layouts are unsupported; conflicting focus/foreground HKLs are Unknown. Transient/unrecognized languages are unsupported. LAYFIX's own TSF profile cannot establish a foreign TSF profile's effective state, so no TSF manager is substituted for foreign readback. A third-party TSF service can disagree with its host's HKL: such behavior is outside verified coverage, and the UI describes thread-layout verification. Owner desktop validation must establish supported applications; this is not universal effective-profile support.
+- A native message cannot be transacted atomically with foreground changes. Final HWND/thread/process/generation checks narrow races; requests remain addressed to the captured original HWND and never follow another foreground target. A timed-out target may process a delivered message later. No retries, synthetic input, or focus-restoration tricks are used.
+- Widget styles include WS_EX_NOACTIVATE/TOOLWINDOW and WM_MOUSEACTIVATE returns MA_NOACTIVATE. The physical-pixel native region matches the pill; drag uses screen coordinates and working-area clamps. Native focus-style failure hides the widget and exposes recovery guidance in Settings.
+- Settings schema v1 is under `%LOCALAPPDATA%/LAYFIX/settings.json`; I/O runs outside the UI thread. Writes serialize through a capacity-one latest-settings channel and SettingsStore's write gate, flush to a unique temporary file, and replace atomically. Future schema files are preserved read-only. No observed input state is persisted.
+- Shutdown pauses requests, stops and joins observation, cancels/joins switching, releases native subscriptions on their registration thread, drains settings writes, removes tray resources, and exits the explicit application lifetime. There is no external worker process.
+
+See [Phase 1 validation](PHASE1_VALIDATION.md) for actual evidence and limitations.

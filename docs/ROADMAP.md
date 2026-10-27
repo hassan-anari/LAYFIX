@@ -2,13 +2,13 @@
 
 Development is gated. Each phase has a separate Codex task, reviewable Draft PR, exact SHA, green applicable CI, manual test plan and owner approval before merge. Do not develop later phases early.
 
-## Phase 0 — Repository specification and governance (current)
+## Phase 0 — Repository specification and governance (merged baseline)
 
 - Written product contract, architecture, UI system, security/privacy policy, test/release standards, Codex AGENTS.md, GitHub PR template, basic CI.
 - No app build or functional UI is claimed.
 - Gate: all intended files present, cross-references coherent, bootstrap docs job green, Draft PR not merged.
 
-## Phase 1 — Windows foundation and language switcher
+## Phase 1 — Windows foundation and language switcher (implemented preview; desktop gate pending)
 
 - Create Layfix.slnx, production projects, test projects, versioned settings and dependency management.
 - Implement native foreground target/language reader with Unknown state and verified language-switch request.

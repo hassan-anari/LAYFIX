@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  AVALONIA_TELEMETRY_OPTOUT: 1
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -38,7 +42,7 @@ jobs:
               exit 1
             fi
           done
-          echo "Repository contract present. This is NOT an application build."
+          echo "Repository specification contract present; application checks run in the Windows job."
 
   windows:
     name: Windows .NET build, tests, portable package
@@ -49,60 +53,36 @@ jobs:
       - name: Setup .NET 10 SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "10.0.x"
-      - name: Detect implementation status
-        id: inspect
-        shell: pwsh
-        run: |
-          $solution = Test-Path 'Layfix.slnx'
-          $app = Test-Path 'src/Layfix.App/Layfix.App.csproj'
-          $projects = @(Get-ChildItem -Path . -Filter '*.csproj' -Recurse -File -ErrorAction SilentlyContinue)
-          if (-not $solution -and $projects.Count -gt 0) {
-            throw 'Project files exist without the expected Layfix.slnx.'
-          }
-          if ($solution -and -not $app) {
-            throw 'Solution exists but the required app project is missing.'
-          }
-          if ($solution) {
-            $tests = @(Get-ChildItem -Path 'tests' -Filter '*.csproj' -Recurse -File -ErrorAction SilentlyContinue)
-            if ($tests.Count -eq 0) { throw 'Solution exists without a test project.' }
-          }
-          "solution_exists=$($solution.ToString().ToLowerInvariant())" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          if (-not $solution) {
-            Write-Host 'BOOTSTRAP ONLY: No .NET solution yet; no application compiled or tested.'
-          }
-      - name: Restore
-        if: steps.inspect.outputs.solution_exists == 'true'
-        run: dotnet restore Layfix.slnx
+          global-json-file: global.json
+      - name: Restore locked dependencies
+        run: dotnet restore Layfix.slnx --locked-mode
       - name: Release build
-        if: steps.inspect.outputs.solution_exists == 'true'
         run: dotnet build Layfix.slnx --configuration Release --no-restore
-      - name: Automated tests
-        if: steps.inspect.outputs.solution_exists == 'true'
+      - name: Automated tests including read-only Win32 smoke
         run: dotnet test Layfix.slnx --configuration Release --no-build --no-restore --logger "trx;LogFileName=test-results.trx"
-      - name: Publish unsigned self-contained win-x64
-        if: steps.inspect.outputs.solution_exists == 'true'
+      - name: Verify nonzero test counts and no skipped tests
         shell: pwsh
-        run: |
-          dotnet publish src/Layfix.App/Layfix.App.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishTrimmed=false -p:PublishSingleFile=false --output dist/win-x64
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          if (-not (Test-Path 'dist/win-x64/Layfix.App.exe')) {
-            throw 'Missing expected app executable. Confirm output assembly name.'
-          }
-          Compress-Archive -Path 'dist/win-x64/*' -DestinationPath 'dist/LAYFIX-win-x64-portable.zip' -Force
-      - name: Upload test results
+        run: ./build/verify-tests.ps1
+      - name: Publish and verify unsigned self-contained win-x64 package
+        shell: pwsh
+        run: ./build/package.ps1
+      - name: Published application lifecycle smoke test
+        shell: pwsh
+        run: ./build/smoke-portable.ps1
+      - name: Upload machine-readable test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: layfix-test-results
-          path: "**/TestResults/*.trx"
-          if-no-files-found: ignore
+          path: "tests/**/TestResults/*.trx"
+          if-no-files-found: error
           retention-days: 14
       - name: Upload unsigned portable ZIP
-        if: steps.inspect.outputs.solution_exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: LAYFIX-win-x64-portable
-          path: dist/LAYFIX-win-x64-portable.zip
+          path: |
+            dist/LAYFIX-win-x64-portable.zip
+            dist/LAYFIX-win-x64-portable.sha256
           if-no-files-found: error
           retention-days: 14
