@@ -84,7 +84,7 @@ jobs:
         if: steps.inspect.outputs.solution_exists == 'true'
         shell: pwsh
         run: |
-          dotnet publish src/Layfix.App/Layfix.App.csproj --configuration Release --runtime win-x64 --self-contained true --no-restore -p:PublishTrimmed=false -p:PublishSingleFile=false --output dist/win-x64
+          dotnet publish src/Layfix.App/Layfix.App.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishTrimmed=false -p:PublishSingleFile=false --output dist/win-x64
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if (-not (Test-Path 'dist/win-x64/Layfix.App.exe')) {
             throw 'Missing expected app executable. Confirm output assembly name.'
