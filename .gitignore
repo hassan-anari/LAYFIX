@@ -1,0 +1,40 @@
+# .NET
+**/bin/
+**/obj/
+**/TestResults/
+*.user
+*.suo
+*.rsuser
+*.cache
+.vs/
+.idea/
+.vscode/
+_ReSharper*/
+*.DotSettings.user
+
+# Packaging and generated files
+dist/
+publish/
+artifacts/
+*.nupkg
+*.snupkg
+*.msi
+*.msix
+*.pfx
+*.p12
+*.cer
+*.key
+*.log
+*.tmp
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Local sensitive data
+.env
+.env.*
+!.env.example
+secrets.json
+settings.local.json

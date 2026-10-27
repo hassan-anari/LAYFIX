@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs-contract:
+    name: Documentation and agent contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate repository specification files
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            README.md AGENTS.md CONTRIBUTING.md THIRD_PARTY_NOTICES.md
+            docs/PRODUCT_SPEC.md docs/ARCHITECTURE.md docs/DESIGN_SYSTEM.md
+            docs/ROADMAP.md docs/QUALITY_GATES.md docs/SECURITY_PRIVACY.md
+            docs/DEVELOPMENT_WORKFLOW.md docs/RELEASE_PROCESS.md
+            docs/REFERENCE_REPOS.md docs/DECISIONS.md
+            .github/pull_request_template.md .github/workflows/ci.yml
+          )
+          for file in "${files[@]}"; do
+            if [[ ! -s "$file" ]]; then
+              echo "::error file=$file::Missing or empty required specification file"
+              exit 1
+            fi
+          done
+          echo "Repository contract present. This is NOT an application build."
+
+  windows:
+    name: Windows .NET build, tests, portable package
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Detect implementation status
+        id: inspect
+        shell: pwsh
+        run: |
+          $solution = Test-Path 'Layfix.slnx'
+          $app = Test-Path 'src/Layfix.App/Layfix.App.csproj'
+          $projects = @(Get-ChildItem -Path . -Filter '*.csproj' -Recurse -File -ErrorAction SilentlyContinue)
+          if (-not $solution -and $projects.Count -gt 0) {
+            throw 'Project files exist without the expected Layfix.slnx.'
+          }
+          if ($solution -and -not $app) {
+            throw 'Solution exists but the required app project is missing.'
+          }
+          if ($solution) {
+            $tests = @(Get-ChildItem -Path 'tests' -Filter '*.csproj' -Recurse -File -ErrorAction SilentlyContinue)
+            if ($tests.Count -eq 0) { throw 'Solution exists without a test project.' }
+          }
+          "solution_exists=$($solution.ToString().ToLowerInvariant())" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          if (-not $solution) {
+            Write-Host 'BOOTSTRAP ONLY: No .NET solution yet; no application compiled or tested.'
+          }
+      - name: Restore
+        if: steps.inspect.outputs.solution_exists == 'true'
+        run: dotnet restore Layfix.slnx
+      - name: Release build
+        if: steps.inspect.outputs.solution_exists == 'true'
+        run: dotnet build Layfix.slnx --configuration Release --no-restore
+      - name: Automated tests
+        if: steps.inspect.outputs.solution_exists == 'true'
+        run: dotnet test Layfix.slnx --configuration Release --no-build --no-restore --logger "trx;LogFileName=test-results.trx"
+      - name: Publish unsigned self-contained win-x64
+        if: steps.inspect.outputs.solution_exists == 'true'
+        shell: pwsh
+        run: |
+          dotnet publish src/Layfix.App/Layfix.App.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishTrimmed=false -p:PublishSingleFile=false --output dist/win-x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not (Test-Path 'dist/win-x64/Layfix.App.exe')) {
+            throw 'Missing expected app executable. Confirm output assembly name.'
+          }
+          Compress-Archive -Path 'dist/win-x64/*' -DestinationPath 'dist/LAYFIX-win-x64-portable.zip' -Force
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: layfix-test-results
+          path: "**/TestResults/*.trx"
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Upload unsigned portable ZIP
+        if: steps.inspect.outputs.solution_exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: LAYFIX-win-x64-portable
+          path: dist/LAYFIX-win-x64-portable.zip
+          if-no-files-found: error
+          retention-days: 14
