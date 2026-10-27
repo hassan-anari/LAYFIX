@@ -1,0 +1,41 @@
+name: Bug report
+description: Report reproducible behavior without sharing typed content or credentials.
+title: "[Bug] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: "Do not include real typed text, clipboard contents, passwords, screenshots of private fields, or keylogging traces. Use synthetic examples only."
+  - type: input
+    id: version
+    attributes:
+      label: LAYFIX build/version or commit
+      placeholder: "e.g., Phase 1 CI artifact / SHA"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Windows version and build
+      placeholder: "Windows 11 23H2 x64"
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Affected app, active layouts and expected behavior
+      description: Use sanitized app names and artificial non-sensitive inputs.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce using synthetic data
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result, error state, and workarounds
+    validations:
+      required: true
