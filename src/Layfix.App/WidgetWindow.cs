@@ -113,7 +113,7 @@ public sealed class WidgetWindow : Window
             englishText.Foreground = ThemeManager.Brush(en ? tokens.AccentText : tokens.Text);
             persianText.Foreground = ThemeManager.Brush(fa ? tokens.AccentText : tokens.Text);
             marker.Foreground = ThemeManager.Brush(tokens.Text);
-            marker.Text = model.Outcome == SwitchOutcome.Pending ? "…" : model.Outcome is not (SwitchOutcome.None or SwitchOutcome.Succeeded) ? "!" : available ? "" : model.Snapshot.Indicator;
+            marker.Text = !available ? model.Snapshot.Indicator : model.Outcome == SwitchOutcome.Pending ? "…" : model.Outcome is not (SwitchOutcome.None or SwitchOutcome.Succeeded) ? "!" : "";
             ToolTip.SetTip(this, model.StatusText + Environment.NewLine + model.OutcomeText + Environment.NewLine + model.S("DragHelp"));
             AutomationProperties.SetName(this, model.S("SwitchAction") + ": " + model.StatusText);
             foreach (var segment in new[] { english, persian })

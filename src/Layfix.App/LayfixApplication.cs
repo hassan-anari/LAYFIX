@@ -82,6 +82,21 @@ public sealed class LayfixApplication : Application
             await RefreshLayouts();
             if (desktop?.Args?.Contains("--smoke-test") == true)
             {
+                string? capture = Environment.GetEnvironmentVariable("LAYFIX_SMOKE_OUTPUT");
+                if (!string.IsNullOrEmpty(capture))
+                {
+                    foreach (string locale in new[] { "en", "fa" })
+                    {
+                        var smokeSettings = new AppSettings { Locale = locale, Theme = locale == "en" ? ThemeMode.Light : ThemeMode.Dark };
+                        var smokeModel = new AppViewModel(smokeSettings);
+                        smokeModel.SetLayouts(model.Layouts);
+                        theme.Apply(smokeSettings);
+                        var smokeWindow = new SettingsWindow(smokeModel, theme, () => { });
+                        smokeWindow.Show();
+                        await smokeWindow.CaptureSmokeViews(capture);
+                        smokeWindow.Close();
+                    }
+                }
                 bool healthy = widget.FocusProtectionReady && notifications.ActiveHookCount == 3 && notifications.SessionNotificationsAvailable;
                 await Stop(healthy ? 0 : 2);
                 return;

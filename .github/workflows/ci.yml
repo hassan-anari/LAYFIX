@@ -77,6 +77,13 @@ jobs:
           path: "tests/**/TestResults/*.trx"
           if-no-files-found: error
           retention-days: 14
+      - name: Upload rendered Settings smoke evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: layfix-ui-smoke
+          path: dist/smoke/*.png
+          if-no-files-found: error
+          retention-days: 14
       - name: Upload unsigned portable ZIP
         uses: actions/upload-artifact@v4
         with:

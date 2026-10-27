@@ -44,3 +44,13 @@ LAYFIX should feel integrated with Windows, not like a generic web wrapper. Use 
 - Large enough hit targets for pointer/touch, keyboard navigation and visible focus indicators in settings.
 - No focus theft, unexpected overlays or animations that interfere with text typing.
 - Validate on Win10/Win11, default and custom accent, dark/light/high contrast, scale 100%/150%/200%, multi-monitor and remote desktop (as supported).
+
+## Phase 1 implemented tokens and surfaces
+
+The native Operate surface follows this contract. Phase 1 uses Segoe UI with Tahoma fallback and Windows font shaping; no reference fonts or artwork are bundled. The widget is a 148 × 46 DIP pill at scale 1, with opaque active segments/text and a 120 ms user-state brush transition only when Windows animation settings allow it. Its HWND/input region matches its compact bounds. Settings default to 800 × 640 DIP (minimum 640 × 480), scroll within each section, and mirror locale flow/margins for Persian.
+
+`AppearanceTokens` is the single pure token source. Light surface/text are `#F9F9F9` / `#1A1A1A`; dark surface/text are `#202020` / `#FFFFFF`. The accent comes from Avalonia's Windows platform settings, with supported DWM fallback; no branding color overrides the system default. Custom filled accents choose black or white text by measured relative luminance. Thin accent marks/slider tracks derive a visible accent against the surface (minimum 3:1), while the filled widget accent remains the user's actual color. Fluent checkbox glyphs and accent-button foregrounds use matching contrast tokens, including pointer/pressed states.
+
+Only the supported glass surface tint uses the saved opacity (`0.65–1`); the whole window and labels remain opaque. Disabled transparency, unavailable backdrops, remote composition restrictions and Windows high contrast use a solid surface. High contrast supplies system window/text/highlight colors and ignores custom accents/opacity/motion. Backdrop names describe requests to Avalonia, not a claim that Windows achieved Mica/Acrylic; `ActualTransparencyLevel` determines whether a translucent tint is used.
+
+The settings tabs cover General, Appearance, Widget, Keyboard and About. Color changes, scaling and visibility apply live; validation/save errors are visible. All end-user strings are keyed English/Persian resources, and layout IDs are deliberately LTR. The native tray provides independent recovery. Source review resolved shutdown, drag/DPI and opacity findings; visual/interactive quality is still subject to the Windows matrix. CI-rendered Settings images are application-view evidence, not editor-focus or actual native-backdrop validation.

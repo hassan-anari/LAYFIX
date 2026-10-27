@@ -25,6 +25,22 @@ public readonly record struct Rgb(byte R, byte G, byte B)
 public sealed record SystemAppearance(bool Dark, Rgb Accent, bool HighContrast, bool Transparency, bool Animations, Rgb? SystemSurface = null, Rgb? SystemText = null, Rgb? SystemHighlightText = null);
 public sealed record AppearanceTokens(bool Dark, Rgb Accent, Rgb AccentText, Rgb Surface, Rgb Text, Rgb Secondary, Rgb Outline, bool Glass, double Opacity, bool Animate)
 {
+    // Accent used as a thin line/glyph must remain visible against the surface.
+    public Rgb AccentOnSurface
+    {
+        get
+        {
+            if (Rgb.Contrast(Accent, Surface) >= 3) return Accent;
+            for (int step = 1; step <= 20; step++)
+            {
+                double amount = step / 20d;
+                byte Mix(byte from, byte to) => (byte)Math.Round(from + (to - from) * amount);
+                var candidate = new Rgb(Mix(Accent.R, Text.R), Mix(Accent.G, Text.G), Mix(Accent.B, Text.B));
+                if (Rgb.Contrast(candidate, Surface) >= 3) return candidate;
+            }
+            return Text;
+        }
+    }
     public static AppearanceTokens Create(AppSettings settings, SystemAppearance system)
     {
         var black = new Rgb(0, 0, 0);

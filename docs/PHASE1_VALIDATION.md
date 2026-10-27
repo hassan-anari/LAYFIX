@@ -2,7 +2,7 @@
 
 ## Evidence boundary
 
-Implementation environment: Linux x64, .NET SDK 10.0.403. Deterministic tests run locally with the native-smoke category excluded. Windows CI additionally executes real Win32 registration/layout enumeration/teardown and a published-process startup/shutdown smoke test. These tests do not generate input or switch an editor's layout. A GitHub-hosted runner is not interactive desktop compatibility evidence.
+Implementation environment: Linux x64, .NET SDK 10.0.403. Deterministic tests run locally with the native-smoke category excluded. Windows CI additionally executes real Win32 registration/layout enumeration/teardown and a published-process startup/shutdown smoke test that also renders the five Settings sections in English/light and Persian/dark. Rendered PNGs are uploaded as `layfix-ui-smoke`; they validate application views, not interactive editor focus or native backdrop appearance. These tests do not generate input or switch an editor's layout. A GitHub-hosted runner is not interactive desktop compatibility evidence.
 
 All human-run rows below are **NOT RUN**. No Windows CPU, memory, latency, DPI, focus-preservation, or editor-compatibility figures are claimed. Use the exact PR head/artifact and record OS/build, keyboard layout IDs, display arrangement/scaling, pass/fail, and sanitized outcome. Do not record typed private text or window contents.
 

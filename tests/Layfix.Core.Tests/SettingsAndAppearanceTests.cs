@@ -95,6 +95,7 @@ public sealed class SettingsAndAppearanceTests
     {
         var tokens = AppearanceTokens.Create(new() { Accent = value }, new(false, new(1, 2, 3), false, true, true));
         Assert.Equal(value, tokens.Accent.ToString());
+        Assert.True(Rgb.Contrast(tokens.AccentOnSurface, tokens.Surface) >= 3);
         Assert.True(Rgb.Contrast(tokens.Accent, tokens.AccentText) >= 4.5);
         Assert.True(Rgb.Contrast(tokens.Surface, tokens.Text) >= 4.5);
         Assert.True(Rgb.Contrast(tokens.Surface, tokens.Secondary) >= 4.5);

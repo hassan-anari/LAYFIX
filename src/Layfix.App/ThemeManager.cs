@@ -59,6 +59,17 @@ public sealed class ThemeManager : IDisposable
         app.Resources["LayfixSecondary"] = Brush(Tokens.Secondary);
         app.Resources["LayfixAccent"] = Brush(Tokens.Accent);
         app.Resources["LayfixAccentText"] = Brush(Tokens.AccentText);
+        foreach (string state in new[] { "", "PointerOver", "Pressed" })
+        {
+            app.Resources["CheckBoxCheckBackgroundFillChecked" + state] = Brush(Tokens.Accent);
+            app.Resources["CheckBoxCheckBackgroundStrokeChecked" + state] = Brush(Tokens.Outline);
+            app.Resources["CheckBoxCheckGlyphForegroundChecked" + state] = Brush(Tokens.AccentText);
+            app.Resources["AccentButtonBackground" + state] = Brush(Tokens.Accent);
+            app.Resources["AccentButtonForeground" + state] = Brush(Tokens.AccentText);
+            app.Resources["SliderTrackValueFill" + state] = Brush(Tokens.AccentOnSurface);
+            app.Resources["TabItemHeaderForegroundSelected" + state] = Brush(Tokens.Text);
+        }
+        app.Resources["TabItemHeaderSelectedPipeFill"] = Brush(Tokens.AccentOnSurface);
         Changed?.Invoke(Tokens);
     }
     public static Color Color(Rgb value) => Avalonia.Media.Color.FromRgb(value.R, value.G, value.B);

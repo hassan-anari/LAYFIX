@@ -9,6 +9,8 @@ using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using Layfix.Core;
 
 namespace Layfix.App;
@@ -166,6 +168,18 @@ public sealed class SettingsWindow : Window
         panel.Children.Add(combo); return panel;
     }
     public void RefreshKeyboardChoices() => Build();
+    internal async Task CaptureSmokeViews(string directory)
+    {
+        Directory.CreateDirectory(directory);
+        for (int index = 0; index < 5; index++)
+        {
+            tabs!.SelectedIndex = index;
+            await Dispatcher.UIThread.InvokeAsync(UpdateLayout, DispatcherPriority.Loaded);
+            using var bitmap = new RenderTargetBitmap(new PixelSize(800, 640), new Vector(96, 96));
+            bitmap.Render(this);
+            bitmap.Save(Path.Combine(directory, $"settings-{locale}-{index}.png"));
+        }
+    }
     private Control About()
     {
         var panel = Page("About");
