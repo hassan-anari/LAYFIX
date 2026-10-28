@@ -76,10 +76,18 @@ sealed class HookLifetime : IDisposable
     {
         if (disposed) return;
         disposed = true;
+        List<Exception>? failures = null;
         try
         {
-            for (int i = cleanup.Count - 1; i >= 0; i--) cleanup[i]();
+            for (int i = cleanup.Count - 1; i >= 0; i--)
+            {
+                try { cleanup[i](); }
+                // Teardown must attempt every registered release, then report failure.
+                // These callbacks release handles only and never process input content.
+                catch (Exception error) { (failures ??= []).Add(error); }
+            }
         }
         finally { cleanup.Clear(); }
+        if (failures is not null) throw new AggregateException("Hook teardown failed", failures);
     }
 }

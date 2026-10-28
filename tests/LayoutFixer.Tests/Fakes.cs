@@ -40,12 +40,14 @@ sealed class BoundaryFake : ICorrectionBoundary
     public string Expected = "", Replacement = "";
     public ReplacementResult Outcome = ReplacementResult.Success;
     public Action? OnValidate, OnReplace;
+    public int TicketLengthAdjustment;
+    public long Revision = 1;
     public EditContext? Capture() => Context;
     public bool MayObserve(EditContext context) => Eligible && Context == context;
     public bool TryValidateSpan(EditContext context, string expected, out EditTicket? ticket)
     {
         Expected = expected;
-        ticket = ValidSpan ? new EditTicket(context, 0, expected.Length, 1) : null;
+        ticket = ValidSpan ? new EditTicket(context, 0, expected.Length + TicketLengthAdjustment, Revision) : null;
         OnValidate?.Invoke();
         return ValidSpan;
     }

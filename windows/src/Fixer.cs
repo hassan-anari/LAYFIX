@@ -67,7 +67,8 @@ sealed class Fixer : IDisposable
 
     bool HandleVerifiedKey(ObservedKey k)
     {
-        if (disposed || Faulted || !Enabled || k.Injected) { Reset(); return false; }
+        if (disposed) return false;
+        if (Faulted || !Enabled || k.Injected) { Reset(); return false; }
         var captured = boundary.Capture();
         if (captured is not { IsKnown: true } || !boundary.MayObserve(captured)) { Reset(); return false; }
         if (context is not null && context != captured) { Reset(); return false; }
@@ -170,7 +171,7 @@ sealed class Fixer : IDisposable
         LastSwitchSucceeded = false;
         if (context is null || Target() is not { } target || !boundary.CanReplace ||
             !boundary.TryValidateSpan(context, string.Concat(run.Select(k => k.Typed)), out var ticket) ||
-            ticket is null || ticket.Context != context || ticket.Start < 0 ||
+            ticket is null || ticket.Context != context || ticket.Start < 0 || ticket.Revision <= 0 ||
             ticket.Length != string.Concat(run.Select(k => k.Typed)).Length ||
             boundary.Capture() != context || !boundary.MayObserve(context))
         {

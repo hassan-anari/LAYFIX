@@ -98,6 +98,9 @@ static class Tests
         tests.Add("disposal stops timer and clears text idempotently", () => { var f = new Fixture(); f.Suggest(); f.Dispose(); f.Dispose(); Check.True(f.Timer.Disposed); Check.Equal(0, f.Engine.BufferedKeys); Check.False(f.Tab()); });
         tests.Add("hook lifecycle releases in reverse order exactly once", () => { var released = new List<nint>(); var hooks = new HookLifetime(); hooks.Register(() => 1, released.Add); hooks.Register(() => 2, released.Add); hooks.Dispose(); hooks.Dispose(); Check.True(released.SequenceEqual(new nint[] { 2, 1 })); });
         tests.Add("failed registration unwinds existing hooks", () => { int released = 0; using var hooks = new HookLifetime(); hooks.Register(() => 1, _ => released++); Check.Throws<InvalidOperationException>(() => hooks.Register(() => 0, _ => released++)); Check.Equal(1, released); });
+        tests.Add("invalid revision rejects replacement", () => { using var f = new Fixture(); f.Suggest(); f.Boundary.Revision = 0; Check.False(f.Tab()); Check.Equal(0, f.Boundary.Replacements); });
+        tests.Add("mismatched UTF-16 span rejects replacement", () => { using var f = new Fixture(); f.Suggest(); f.Boundary.TicketLengthAdjustment = 1; Check.False(f.Tab()); Check.Equal(0, f.Boundary.Replacements); });
+        tests.Add("one failed hook cleanup cannot leak other registered handles", () => { int released = 0; var hooks = new HookLifetime(); hooks.Register(() => 1, _ => released++); hooks.Register(() => 2, _ => throw new InvalidOperationException()); Check.Throws<AggregateException>(hooks.Dispose); Check.Equal(1, released); hooks.Dispose(); });
         return tests.Run(args.FirstOrDefault() ?? "TestResults/core.xml");
     }
 }
