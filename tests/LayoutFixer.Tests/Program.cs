@@ -101,6 +101,8 @@ static class Tests
         tests.Add("invalid revision rejects replacement", () => { using var f = new Fixture(); f.Suggest(); f.Boundary.Revision = 0; Check.False(f.Tab()); Check.Equal(0, f.Boundary.Replacements); });
         tests.Add("mismatched UTF-16 span rejects replacement", () => { using var f = new Fixture(); f.Suggest(); f.Boundary.TicketLengthAdjustment = 1; Check.False(f.Tab()); Check.Equal(0, f.Boundary.Replacements); });
         tests.Add("one failed hook cleanup cannot leak other registered handles", () => { int released = 0; var hooks = new HookLifetime(); hooks.Register(() => 1, _ => released++); hooks.Register(() => 2, _ => throw new InvalidOperationException()); Check.Throws<AggregateException>(hooks.Dispose); Check.Equal(1, released); hooks.Dispose(); });
+        tests.Add("thirteenth word cancels entire run", () => { using var f = new Fixture(); f.Suggest(); for (int i = 0; i < 12; i++) { f.Type("hello"); f.Space(); } Check.False(f.Popup.Visible); Check.Equal(0, f.Engine.BufferedKeys); Check.False(f.Tab()); });
+        tests.Add("unmappable destination cancels without source-character fallback", () => { using var f = new Fixture(); f.Mapping.Values[(0x409, (uint)'w', false, false)] = null; f.Type("want"); f.Space(); Check.False(f.Popup.Visible); Check.Equal(0, f.Engine.BufferedKeys); });
         return tests.Run(args.FirstOrDefault() ?? "TestResults/core.xml");
     }
 }

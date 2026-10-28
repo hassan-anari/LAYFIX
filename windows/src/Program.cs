@@ -16,7 +16,8 @@ static class Program
         using var mutex = new Mutex(true, "LayoutFixer.SingleInstance", out bool first);
         if (!first) return 0;
         ApplicationConfiguration.Initialize();
-        Application.Run(new TrayApp());
+        using var app = new TrayApp();
+        Application.Run(app);
         return 0;
     }
 }
@@ -27,6 +28,7 @@ sealed class TrayApp : ApplicationContext
     const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
     readonly NotifyIcon tray;
     readonly ContextMenuStrip menu = new();
+    bool resourcesDisposed;
     readonly ToolStripMenuItem startupItem = new("Start with Windows");
 
     public TrayApp()
@@ -61,12 +63,25 @@ sealed class TrayApp : ApplicationContext
         else key.DeleteValue("LayoutFixer", false);
     }
 
-    protected override void ExitThreadCore()
+    void CloseResources()
     {
+        if (resourcesDisposed) return;
+        resourcesDisposed = true;
         tray.Visible = false;
         tray.Dispose();
         menu.Dispose();
+    }
+
+    protected override void ExitThreadCore()
+    {
+        CloseResources();
         base.ExitThreadCore();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) CloseResources();
+        base.Dispose(disposing);
     }
 }
 
