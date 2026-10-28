@@ -1,26 +1,19 @@
 # Architecture Decision Log
 
-Decisions below define the current proposed baseline. If later evidence invalidates one, submit an ADR update and tests in a Draft PR before changing product behavior.
+| ID | Decision | Status / reason |
+| --- | --- | --- |
+| ADR-001 | Windows 10/11 x64, C# / .NET 10 | Retained; actual compatibility acceptance outstanding |
+| ADR-002 | Adopt actual LayoutFixer Windows at 969814d2dbb6819eaef984525ef11db4c3f48dca | Approved reset; supersedes Avalonia-first projects/PR #2 |
+| ADR-003 | Keep upstream Windows Forms tray/popup and physical/dictionary correction rules | Approved; no independent algorithm recreation or final UI work |
+| ADR-004 | Exact focused-thread HKL, retain variants, reject ambiguous opposite selection | Required for correctness; explicit profile UI deferred |
+| ADR-005 | Offline/no content persistence; unknown sensitivity fails closed | Release blocker; no cloud/telemetry/clipboard fallback |
+| ADR-006 | No generic Backspace replacement | Unsafe upstream path removed; atomic-span adapter required |
+| ADR-007 | Global observation and cross-app editing blocked in audit binary | No real secure-field/exact-span adapter is yet accepted; no hooks installed, no settings/CLI bypass |
+| ADR-008 | Retain engine behind injected boundaries; dependency-free real regression executables | Test upstream behavior and safety contracts without representing fake adapters as native guarantees |
+| ADR-009 | Verbatim import first, then hardening; SHA-256/blob manifest | Reviewable provenance with separate immutable import commit |
+| ADR-010 | Separate MIT application and CC BY-SA 4.0 datasets, full attribution/legal text in artifact | Migration explicitly authorizes this import with redistribution obligations documented |
+| ADR-011 | Pinned SDK/Actions, locked dependency-free restore, Windows self-contained folder ZIP | Inspectable unsigned audit artifact; no upstream binaries, single-file, release or installer |
+| ADR-012 | Overall license for original LAYFIX additions | Still open; do not remove upstream grants/notices or claim a production licensing decision |
+| ADR-013 | Final switcher and extensive settings UI | Subsequent development stages; Phase 2 is not started |
 
-| ID | Decision | Status | Rationale |
-| --- | --- | --- | --- |
-| ADR-001 | Windows 10/11 x64 first; C# / .NET 10 / Avalonia, native Windows interop | Accepted for initial implementation | Native Windows integration and Filee-inspired UI without requiring user SDK |
-| ADR-002 | Separate UI, pure core and Win32/UIA/TSF adapters | Accepted | Testable logic and minimized native coupling |
-| ADR-003 | Focused target application's verified layout is authoritative | Accepted | Windows may maintain per-thread/app input layout |
-| ADR-004 | Conservative, explicit correction; no auto-rewrite by default | Accepted | Prevent text loss and shortcut hijacking |
-| ADR-005 | Offline, no keystroke or user-text persistence, unknown sensitive context fails closed | Accepted | Privacy boundary of keyboard utility |
-| ADR-006 | Windows accent/theme inheritance with override and opaque fallback | Accepted | Consistent Fluent feel and accessibility |
-| ADR-007 | Codex Draft PR + GitHub Actions, no direct main merge/release | Accepted | Reproducibility and owner review |
-| ADR-008 | Phase 1 portable self-contained x64 only; installer/signing later | Accepted | Early binary validation without user .NET dependency |
-| ADR-009 | No project license selected during bootstrap | Open | Owner must approve licensing before redistribution |
-| ADR-010 | Keyboard hook/TSF adapters and clipboard strategy require prototype evidence | Open | App behavior varies; prefer no clipboard fallback |
-
-## Pending technical verification
-
-- Which Windows API combination yields reliable switching for common TSF-aware apps and both Persian layout variants?
-- What focused-editable and sensitive-field classification is safe for browser/Electron/desktop editors? Unsupported defaults to no observation.
-- Does the non-activating floating widget preserve typing focus when clicked in Chrome, VS Code, Notepad and Telegram Desktop across Windows versions?
-- Which selected-text replacement adapter is demonstrably non-destructive for each supported editor?
-- Should full app UI be shipped Persian-first or English-first? Ship both locales in final UX without blocking Phase 1 engine development.
-
-Open verification points are not license to implement risky guessed behavior.
+Remaining verification: real sensitive-control detection, exact editor revision/span replacement, layout-switch readback, bounded hook/event processing and interactive Windows acceptance. A disabled feature is an explicit blocker and must never be described as a completed safe adapter.

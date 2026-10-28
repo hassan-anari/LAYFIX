@@ -1,25 +1,7 @@
-# Packaging, Signing and Releases
+# Build Artifacts and Release Process
 
-## Status
+Phase 1 builds `windows/LayoutFixer.Windows.csproj` from the pinned upstream-derived C# source on a Windows GitHub-hosted runner with SDK 10.0.100. No upstream precompiled executable is used. The unsigned self-contained win-x64 folder is ZIP-packaged with runtime, all dictionaries, MIT/CC BY-SA notices, security blocker disclosure and source/run provenance. A SHA-256 companion file is uploaded with it.
 
-Initial repo contains only specifications and CI bootstrap. No executable, installer, signing key or GitHub Release is produced yet.
+The artifact name is `LAYFIX-win-x64-portable`; JUnit test evidence is `layfix-test-results`. An end-user PC needs no separate .NET install. Extract the complete folder; do not copy only the EXE. This is an audit build: global observation and correction are blocked pending real adapter safety acceptance.
 
-## Phase 1 distribution (unsigned preview)
-
-Windows GitHub Actions builds a .NET 10 self-contained, non-trimmed win-x64 portable package from **src/Layfix.App/Layfix.App.csproj**, after restore/build/test; packaging must include native Avalonia dependencies. Upload ZIP as a PR/run artifact. CI runners need SDK; end-user machine does not.
-
-Do not assert a single physical EXE is always viable until Avalonia/native dependency packaging is validated. Use self-contained folder + ZIP as the reliable baseline; single-file publishing may be evaluated as an optimization.
-
-## Phase 4 distribution (release gate)
-
-- Approved semantic version tag, immutable SHA, release notes/changelog, lockfile/manifest and verified dependencies.
-- Produce win-x64 portable archive and Setup.exe with uninstall support. Add Windows ARM64 only after explicit support/test sign-off.
-- Generate SHA-256 checksums and, if approved, SBOM and provenance.
-- Review signing strategy; use protected release secrets only from trusted workflows. Never expose certificates or private keys to PR jobs.
-- Validate Windows SmartScreen/signature status honestly. Unsigned test artifacts must be marked unsigned.
-- Test clean install/upgrade/uninstall without deleting user data unexpectedly; system startup remains opt-in.
-- User approval required for publishing release, auto-update configuration and installer distribution.
-
-## Release invariants
-
-No automatic merge, no tag/release from unreviewed PR, no tests silently skipped, and no installer until native end-to-end validation. A successful build is not proof of usability or safe edit behavior.
+No production release, installer, signing bypass, automatic merge or Phase 2 is authorized. Before any release, the owner must review actual CI evidence, fresh-Windows launch, real editor/privacy acceptance, artifact/license composition, project licensing and signing. Never describe an unsigned PR artifact as a signed production build. Do not silently enable blocked features for release packaging.

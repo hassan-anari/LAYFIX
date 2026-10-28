@@ -1,49 +1,23 @@
 # Roadmap and Phase Gates
 
-Development is gated. Each phase has a separate Codex task, reviewable Draft PR, exact SHA, green applicable CI, manual test plan and owner approval before merge. Do not develop later phases early.
+## Phase 0 — specifications (baseline)
 
-## Phase 0 — Repository specification and governance (current)
+Completed baseline `main`: `27de06e738cd585173a30419dd993eb427a5bd74`. The original Avalonia-first implementation plan is superseded. Draft PR #2 must not be merged or used as the development base.
 
-- Written product contract, architecture, UI system, security/privacy policy, test/release standards, Codex AGENTS.md, GitHub PR template, basic CI.
-- No app build or functional UI is claimed.
-- Gate: all intended files present, cross-references coherent, bootstrap docs job green, Draft PR not merged.
+## Phase 1 reset — upstream Windows import and safety audit (current)
 
-## Phase 1 — Windows foundation and language switcher
+Adopt LayoutFixer Windows at `969814d2dbb6819eaef984525ef11db4c3f48dca`. Preserve a verbatim import commit with checksums, then make separate hardening/test/specification changes. Retain the actual dictionary detector, physical mapping, consecutive-word rules, tray, caret popup, Tab/Esc semantics and command-line detection mode. No independently recreated algorithm.
 
-- Create Layfix.slnx, production projects, test projects, versioned settings and dependency management.
-- Implement native foreground target/language reader with Unknown state and verified language-switch request.
-- Implement a minimalist non-activating, movable FA/EN widget, tray, pause/show/quit, system theme/accent and readable visual fallback; user can change at least size, opacity and position.
-- Ensure external Windows layout switching updates the widget; do not steal keyboard focus on click.
-- Initial Win10/Win11 compatibility matrix, deterministic tests for state/settings/window abstractions, Windows integration smoke tests where possible.
-- GitHub Actions restores, builds, tests and uploads a self-contained unsigned Windows x64 portable ZIP. No .NET runtime needed on the end-user machine.
-- Gate: clean-room Windows launch, no false language indicator, verified focus preservation on supported apps, diagnostics show blocked switch accurately, meaningful passing CI.
-- Excluded: any typo detection or rewriting; full final settings polish; installer/signing.
+Required delivery: pinned .NET 10 Windows CI build, meaningful automated tests, self-contained unsigned x64 portable ZIP with datasets/dependencies/notices, SHA-256 and machine-readable test results. No upstream executables or unrelated macOS/promotional files.
 
-## Phase 2 — Safe manual correction
+The current audit build intentionally blocks global observation and destructive editing. To complete Phase 1, implement and independently verify an editor adapter that proves secure-field exclusion and atomically validates/replaces the exact span; wire its eligible input stream to the retained engine without blocking keyboard callbacks. Complete the real Windows acceptance matrix. Never enable unsafe generic Backspace replacement to satisfy a demo.
 
-- Source/target keyboard layout mapping, deterministic conversion (FA/EN, variants, Shift, punctuation, Unicode).
-- User-invoked correction for verified selection/context with explicit safe edit boundaries and abort logic.
-- No blind bulk backspace or default clipboard mutation. App compatibility table and manual verifications.
-- Gate: comprehensive corpus unit tests, race/focus validation, no inadvertent edits in secure/unsupported contexts.
+Phase 1 acceptance is incomplete while that adapter and interactive evidence are missing, even if the CI package builds. See [Security Audit](SECURITY_AUDIT.md) for individual blockers.
 
-## Phase 3 — Smart detection and suggestions
+## Next approved development stages (do not begin in this task)
 
-- Local frequency dictionaries with license-approved source, conservative wrong-layout detector, FSM for candidate runs, cursor-near popup.
-- Tab to accept only when suggestion context valid; Esc dismiss; no automatic rewriting by default.
-- Application exclusions, sensitivity setting, ambiguous-word behavior, performance tests.
-- Gate: test matrix for normal navigation, secure controls, code editors, IME and mixed-language cases; no destructive false positives in verified regression set.
+After owner review of the functioning safe upstream engine, design the final language switcher and extensive settings/localization UI around it. Installer/signing, release publication, richer editor adapters and additional platforms require their own scope and review. They are not implicit authorization to proceed to Phase 2 here.
 
-## Phase 4 — UI completion and distribution
+## Release decision
 
-- Full Fluent glass theme system, optional custom accents, personalization/settings, localization, accessibility and resilient monitor handling.
-- Portable x64 plus installer/uninstaller, release workflow, checksums, changelog and upgrade path; signing strategy reviewed separately.
-- Extended compatibility, failure telemetry strictly local/opt-in, documentation, performance and soak testing.
-- Gate: signed versus unsigned status clearly disclosed; clean-machine install/uninstall, persistence and privacy audit; explicit release approval.
-
-## Post-MVP options (not approved)
-
-ARM64, additional languages, advanced app adapters, optional opt-in update checks, richer diagnostics, automatic fixing, enterprise deployment. None are implicit requirements or permitted scope creep.
-
-## Release decision rule
-
-An artifact existing in CI is only a downloadable build. A production-quality/releasable feature requires all code, tests, Windows hands-on validation, privacy checks and user approval. Missing UI tests must be reported, never assumed.
+A CI artifact is a downloadable audit build. Do not merge, close previous PRs, publish a release, claim production readiness or infer interactive compatibility from green API tests.

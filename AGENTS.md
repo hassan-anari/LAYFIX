@@ -12,12 +12,14 @@ This file is authoritative for autonomous coding agents working in this reposito
 
 ## Technical baseline
 
-- Target Windows 10/11. Use C# / .NET 10, Avalonia UI and a native Win32/UIA/TSF integration layer.
-- Planned projects: src/Layfix.App, src/Layfix.Core, src/Layfix.Windows, tests/Layfix.Core.Tests, tests/Layfix.Windows.Tests; solution: Layfix.slnx.
-- Keep the pure keyboard-conversion/detection engine independent of Avalonia and Win32. Make platform calls injectable and mockable.
-- Keep UI thread free of blocking hooks, polling loops, dictionaries loading and I/O. Handle every native handle/subscription cleanup path.
-- Use system theme/accent as the default, support explicit user overrides, safe transparency fallback, multi-monitor DPI and accessibility.
-- All core keyboard features must remain fully functional without an internet connection.
+- Phase 1 is the approved upstream Windows migration, based on sina-developer/LayoutFixer commit `969814d2dbb6819eaef984525ef11db4c3f48dca`. Reuse its C# detection and correction rules. Do not recreate the algorithm.
+- Target Windows 10/11 x64, C# / .NET 10 and upstream Windows Forms tray/popup. Avalonia PR #2 is rejected; never use its implementation or branch as the base.
+- `windows/LayoutFixer.Windows.csproj` is the shipping application; `Layfix.slnx` includes the two regression executables in `tests/`. Physical Windows boundaries and safety adapters must be injectable.
+- The application includes an approved, privacy-restricted keyboard observation and correction component. Approval of this direction does not certify an editor as safe. The audit build deliberately installs no global hooks and enables no destructive replacement until a reviewed secure-control and atomic-span adapter passes acceptance. Never remove this gate just to demonstrate functionality.
+- Preserve the upstream tray and popup. The final language switcher and extensive settings are subsequent stages and are outside this task.
+- All core keyboard features work offline. No cloud model, API, telemetry, clipboard fallback, or input-content logging.
+- Keep the UI and hook callbacks nonblocking; do not call UIA providers, load dictionaries, or perform edits in a hook callback. Bound volatile buffers and dispose all resources.
+- Preserve the verbatim import as its own commit and record changed files separately. Keep MIT attribution and separate CC BY-SA 4.0 dataset notices in every artifact.
 
 ## Mandatory safety constraints
 
@@ -43,7 +45,7 @@ This file is authoritative for autonomous coding agents working in this reposito
 
 ## CI and delivery
 
-- On each PR, run the repository checks. Once the solution exists, CI MUST restore, compile in Release, run available automated tests and build an unsigned self-contained win-x64 portable artifact.
+- On each PR, run the repository checks. CI MUST perform locked restore, Release build, run both real regression executables (JUnit XML), and publish an unsigned self-contained win-x64 portable folder/ZIP.
 - Installer/release signing and publication are independent future gates. Do not represent an unsigned PR artifact as a signed production release.
 - Never require .NET or developer tools on the end-user PC for the supported portable/installer outputs.
 - Use least-privilege GitHub Actions permissions. Avoid untrusted PR scripts with write tokens, supply-chain bypasses and publishing from fork PRs.

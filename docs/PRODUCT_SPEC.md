@@ -1,77 +1,33 @@
-# Product Specification
+# Product Requirements — Upstream Windows Migration
 
-## Goal and user problem
+## Approved Phase 1 scope
 
-Windows English/Persian users frequently type text with the wrong active keyboard layout and cannot reliably see or switch the language of the currently focused app. LAYFIX offers a persistent, low-distraction floating language switcher and a safe, optional correction suggestion that reconstructs the intended characters from physical keyboard input.
+LAYFIX is an offline English/Persian Windows keyboard-layout correction utility derived directly from the real LayoutFixer Windows C# source at `969814d2dbb6819eaef984525ef11db4c3f48dca`. It is not a semantic translator or cloud writing assistant. Windows 10/11 x64 is the target; compatibility must be measured on actual desktops.
 
-## Target and boundaries
+P-01: Preserve upstream frequency dictionary detection and conservative English/Persian confidence rules, including short ambiguous words, Webster protection, wrong-layout false positives and consecutive mistaken runs. Reuse the implementation; do not independently recreate it.
 
-- Supported initial platform: Windows 11 and Windows 10, x64; no admin permission required for normal usage.
-- Languages in MVP: English and Persian, including physical keyboard layout variants configured in Windows.
-- Scope: keyboard *layout* correction, not semantic translation, spell-checking or an AI writing assistant.
-- No promise that every app, elevated window, secure field, game, IME or remote desktop will support global input interception or rewriting.
-- Entire core feature set works offline. Optional update checking, if implemented later, must be opt-in and disclosed.
+P-02: Preserve physical-key conversion in both directions. Handle Shift/Caps Lock, punctuation, valid Unicode sequences, focused thread identity and installed layout variants. Refuse unmappable/dead keys, unknown focus and ambiguous target selection rather than guessing.
 
-## Functional requirements
+P-03: Retain the upstream tray and non-activating correction popup near the caret. Tab may accept only a visible suggestion whose exact editor/span/context is valid; Esc dismisses and remains available to the app. Normal Tab must pass through otherwise. Cancel on focus/layout/caret/selection change, timeout, shortcut, mouse movement affecting context, pause or failure.
 
-### P-01: Language indicator and switcher
+P-04: Preserve explicit offline `--test` detection using caller-supplied sample text and installed layouts. It must not observe or persist actual user typing. Retain opt-in Start with Windows and Quit controls without changing existing upstream preference keys silently.
 
-- Shows the **effective active input layout/language in the foreground target**; reads changes made externally, including Windows shortcuts and per-app layout changes.
-- Clearly distinguishes FA, EN and Unknown/Unsupported (never display a guessed language as fact).
-- A compact, draggable, always-on-top, borderless floating widget with click-to-switch; configurable position, size, opacity, theme and display mode.
-- Pointer interaction must not permanently steal focus from the target text field. Language change must be verified against the original target; indicate failure without lying about state.
-- Supports multiple monitors, per-monitor DPI, monitor disconnection, taskbar and fullscreen policies; remembers a valid on-screen position.
-- Has an independent system tray control to hide/show, pause monitoring, open settings and quit.
-- Do not repeatedly post language changes on a timer. Use notifications or bounded observation to reflect external changes.
+P-05: Include an approved, privacy-restricted keyboard observation/correction component. Never buffer secure/password/private or uncertain contexts. No typed-text persistence, telemetry, network API/model, implicit clipboard use, elevation or privilege bypass. Destructive edits require atomic exact-span validation and explicit acceptance. A generic Backspace count is insufficient.
 
-### P-02: Manual layout correction
+P-06: Build from C# source in our Windows GitHub Actions with .NET 10. Provide a self-contained unsigned x64 portable folder/ZIP, SHA-256, test XML, data/license notices and commit/run provenance. No separate end-user .NET installation; no installer/release in this task.
 
-- User invokes a configurable shortcut to correct the applicable selection or safely tracked text run without translating meaning.
-- Conversion must use actual keyboard mapping/layout pair wherever available, not a naive fixed substitution table. Account for modifier state, keys that do not map one-to-one, punctuation and Unicode.
-- Before rewriting, validate foreground HWND, target edit control, selection/caret, recorded layout and text span. Abort safely on unsupported/unverified edit surfaces.
-- Explicit preview/confirmation is preferred when an edit may be destructive. Never delete arbitrary characters from a different field or stale caret.
-- If the edit fails, no claim of success; provide non-destructive error feedback. Clipboard is not an implicit fallback.
-- Support both directions, FA -> EN and EN -> FA.
+## Current capability and limitations
 
-### P-03: Suggestions for mistaken typing
+The audit build runs the retained tray and caller-invoked detector. Actual global input observation, live suggestions, Tab acceptance, cross-app replacement and post-correction layout switching are **BLOCKED** until a safe editor adapter is verified. The classifier, physical conversion and suggestion/acceptance engine remain testable production source. This is an explicit Phase 1 gap, not a completed feature claim. The shipping process registers no global hooks or UIA callbacks.
 
-- Check candidate words/runs after word boundaries, using frequency-aware dictionaries and conservative context rules inspired by LayoutFixer.
-- No automatic rewriting by default. Show a small preview near the caret if safely locatable; fallback to an unobtrusive position when caret geometry is unavailable.
-- When suggestion is valid and visible, Tab accepts and switches to the target layout; Esc dismisses; continued normal typing may dismiss or extend suggestion according to a tested state machine.
-- Otherwise, Tab and Esc retain normal app behavior. Do not trap navigation or shortcuts; clear stale suggestions on focus change, edit/caret movement, mouse clicks, layout change or timeout.
-- Handle ambiguous short words, mixed-language text, brand names, code, URLs, email addresses, punctuation and IME carefully. Favor missing a suggestion over damaging valid text.
-- Sensitivity and dismissal learning may be added later, without persisting typed content.
+## Acceptance journeys (all interactive journeys NOT RUN)
 
-### P-04: Preferences and customization
+1. Fresh Windows PC without .NET: extract portable ZIP, launch tray, verify notices, quit cleanly. Check no hooks/input collection while blocked.
+2. Explicit test mode: one EN plus one FA layout; confirm deterministic detection for both directions and conservative short words. Multiple variants must report ambiguity.
+3. Before enabling a future adapter: known secure/password field, browser password, lock/UAC/elevated/remote/unsupported contexts must produce no textual buffer or correction. Unknown means disabled.
+4. Safe supported editor: type a disposable mistaken run, inspect preview, accept only its exact span, verify layout switch/readback, unchanged clipboard and undo. Move caret/focus/layout before Tab: abort without loss and preserve navigation.
+5. Partial/failed edit: no blind retry, no mistaken success or layout switch; partial uncertainty disables the session.
 
-- In-app Settings for appearance, accent/color override, transparency/fallback, widget size/position, animations/reduced motion, theme and RTL language.
-- Correction controls: global enable/pause, manual shortcut, suggestion enable, confirmation behavior, sensitivity and exclusion list.
-- Keyboard controls: chosen English/Persian layouts and user-definable switch hotkey where safe; detect unsupported layouts.
-- App controls: start with Windows (user consent), tray, notifications, update check (optional future), restore defaults, diagnostics.
-- Preferences persisted locally and atomically with schema version, validation, recovery from corruption and upgrade migrations. No cloud profile.
-- Accessibility: keyboard navigation, usable contrast on all accents/backdrops, screen readers as practical, reduced motion and touch-sized targets.
+## Deferred UI
 
-### P-05: Privacy, reliability and feedback
-
-- No text/key content stored or transmitted, no default telemetry, no accidental clipboard exfiltration.
-- Sensitive fields and unknown contexts are excluded by default; user can pause from tray/widget.
-- Diagnostics may report sanitized app identity, OS version, effective language, operation outcome/error code and performance totals, but never typed content or selections.
-- Duplicate instance prevention, crash resilience, cleanup on exit, and no abandoned global hooks or altered system settings.
-- Meaningful indication when target layout switching is blocked by Windows/app-specific behavior. Never claim to repair Windows Text Input Services automatically.
-
-## Out of scope for MVP
-
-- Semantic translation, cloud LLM, word prediction, grammar correction, automatic language switching from intent, mobile/macOS/Linux, elevated process control, kernel drivers, Windows language installation, gaming anti-cheat support, network sync, collecting typing analytics.
-
-## Acceptance journeys
-
-1. **Normal switching**: Focus an ordinary editable field; widget shows current language, clicking changes target language while focus remains usable; external Win+Space updates widget.
-2. **Wrong Persian layout**: Type the physical keystrokes for “this instead of writing it in english” while Persian input is active; a preview offers intended English; Tab safely replaces the recorded run and language updates, or aborts without loss.
-3. **Wrong English layout**: Type keystrokes whose alternate Persian layout is “سلام”; receive an appropriate suggestion, with safeguards for common English words.
-4. **Dismissal**: Normal Tab continues to navigate when no eligible suggestion exists. Esc dismisses without editing.
-5. **Unsupported editor**: Cannot verify caret/selection or safety: no edit, no hidden clipboard mutation, diagnostics explain unsupported context.
-6. **Privacy**: Secure/password field: no recorded textual run, suggestion or corrective replacement.
-7. **Customization**: Changing theme/accent override/opacity or language of UI updates immediately and survives restart.
-8. **Offline distribution**: Download the CI portable ZIP on clean supported Windows; run without installing .NET SDK or runtime.
-
-Acceptance journeys are goals, not claims that code exists. Each phase has its own verifiable gates in [Roadmap](ROADMAP.md).
+The final language switcher, full settings, extensive personalization, English/Persian localized UI and accessibility polish are subsequent approved stages to be designed around the safe upstream engine. No rejected Avalonia interface is recreated in Phase 1. No Phase 2 development is authorized by this migration.
