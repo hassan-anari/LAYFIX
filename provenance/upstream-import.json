@@ -1,0 +1,119 @@
+{
+  "repository": "https://github.com/sina-developer/LayoutFixer",
+  "commit": "969814d2dbb6819eaef984525ef11db4c3f48dca",
+  "layfix_base": "27de06e738cd585173a30419dd993eb427a5bd74",
+  "files": [
+    {
+      "upstream_path": "LICENSE",
+      "path": "licenses/upstream/LICENSE",
+      "bytes": 1072,
+      "git_blob": "1e0e3d3a8ff7f59b5e17f7fc276547f36005a9e1",
+      "sha256": "6e8d09ce269ddcad83dd5c18cf2fa888e234bef1a29c06a2e93d8629cb2c91d9"
+    },
+    {
+      "upstream_path": "Resources/en_50k.txt",
+      "path": "Resources/en_50k.txt",
+      "bytes": 622749,
+      "git_blob": "bbf5fa991058ff642732784b31af023f66462e1d",
+      "sha256": "5351ff405b1126ef555791dd4d9798a48e3e9a501a9fc481a9da957752cfb458"
+    },
+    {
+      "upstream_path": "Resources/fa_50k.txt",
+      "path": "Resources/fa_50k.txt",
+      "bytes": 764003,
+      "git_blob": "22455fa993ab2a54304d33d9c76102b55d2d1619",
+      "sha256": "96ea178f77022cdb2d358feb75a4fc474754daa224a4beba296ad777a514bdf7"
+    },
+    {
+      "upstream_path": "THIRD_PARTY_NOTICES.md",
+      "path": "licenses/upstream/THIRD_PARTY_NOTICES.md",
+      "bytes": 1108,
+      "git_blob": "2444b3540bc971f4599534270b1ea28f38cead0e",
+      "sha256": "4b1a6ea375f8a7028aa9c48bff53060d559e20faf15545b43309dac7c53dbb1e"
+    },
+    {
+      "upstream_path": "windows/.gitignore",
+      "path": "windows/.gitignore",
+      "bytes": 15,
+      "git_blob": "e76c073ebce56a96b253a3ad4835d107cd9a792f",
+      "sha256": "184471abca66d74a124a9be2c7082c231a70b7c32814b08c708f5812c8a06d51"
+    },
+    {
+      "upstream_path": "windows/LayoutFixer.Windows.csproj",
+      "path": "windows/LayoutFixer.Windows.csproj",
+      "bytes": 1471,
+      "git_blob": "57303d1f255e8eb04a8e4d9ebbc6c460e4451025",
+      "sha256": "4350a03f8d3fabef2bf7bd001fffbce63b9c739d9ddf2eb52f5d148478d3b62f"
+    },
+    {
+      "upstream_path": "windows/README.md",
+      "path": "windows/README.md",
+      "bytes": 1360,
+      "git_blob": "9c0d9f27bb44a678b1802d74b2f8a5ca50e28d93",
+      "sha256": "80481d380453824622e2b1b568e902a1a1967ee728fd74974c5d3934635584b5"
+    },
+    {
+      "upstream_path": "windows/assets/app.ico",
+      "path": "windows/assets/app.ico",
+      "bytes": 52654,
+      "git_blob": "aedc72f91401de7b861feadde9716acd6098b88f",
+      "sha256": "95a6021a257dc55dc5c5882d876d184ca9e8e5860ca6a91493baf205e3305dca"
+    },
+    {
+      "upstream_path": "windows/assets/tray.ico",
+      "path": "windows/assets/tray.ico",
+      "bytes": 12933,
+      "git_blob": "60797b3c62b7f028f470a3e444c6a2fae184159a",
+      "sha256": "2e58dc06b4d873b83e29da717179824985c6a7079bb661531105fb86c32c91b2"
+    },
+    {
+      "upstream_path": "windows/data/words.txt",
+      "path": "windows/data/words.txt",
+      "bytes": 2493885,
+      "git_blob": "8bfe1bd09808cd4b8f88dadedc1ac697120e3c8d",
+      "sha256": "be41ad97963bf8dabedd5871d5d691596175269d540956b0f9965a885c2bbab9"
+    },
+    {
+      "upstream_path": "windows/src/Dictionaries.cs",
+      "path": "windows/src/Dictionaries.cs",
+      "bytes": 3271,
+      "git_blob": "1019021a7d773240bfc79fa7a762d087174bb75f",
+      "sha256": "e500b917e3d5083ca72a3153edea789374180f17f1130ddc47a4ac184db6807a"
+    },
+    {
+      "upstream_path": "windows/src/Fixer.cs",
+      "path": "windows/src/Fixer.cs",
+      "bytes": 6169,
+      "git_blob": "6d3c972931c813bed3496defc2807f2631e8767e",
+      "sha256": "3dd22718e953c15bc7e3e8aff0988273e89dc88e92388840d506211d8a475207"
+    },
+    {
+      "upstream_path": "windows/src/Layouts.cs",
+      "path": "windows/src/Layouts.cs",
+      "bytes": 2424,
+      "git_blob": "0593f21ecf605240f74a2fd4f1403112665ff46d",
+      "sha256": "7c4268e595524830d6e2498ae26cb0984e1238989ece17c66e6b17d159748219"
+    },
+    {
+      "upstream_path": "windows/src/Native.cs",
+      "path": "windows/src/Native.cs",
+      "bytes": 4396,
+      "git_blob": "af08a11bd4e7dfb73b002898eca079e3ce05eda1",
+      "sha256": "afafa7ac20f2aefbe23e0dd1bcfde4ccef6c0d7992aea4a7341403f761f4a57a"
+    },
+    {
+      "upstream_path": "windows/src/Popup.cs",
+      "path": "windows/src/Popup.cs",
+      "bytes": 5448,
+      "git_blob": "4d2b5207a422559858cadde331a7bbc063e72867",
+      "sha256": "3932475347c71d9b34fc2b159077551f3af710539473ed0c5fd574dd3c5de5f7"
+    },
+    {
+      "upstream_path": "windows/src/Program.cs",
+      "path": "windows/src/Program.cs",
+      "bytes": 6836,
+      "git_blob": "9f6208c4505a17bb8040dc3a924abc28d67651ee",
+      "sha256": "d6f0f6f1f8f9af699a17c7aa218f589f693103c5b8a358f19b85e10c1b850791"
+    }
+  ]
+}
