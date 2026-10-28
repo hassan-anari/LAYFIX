@@ -1,20 +1,9 @@
-# Reference Repositories and Reuse Policy
+# Source References and Provenance
 
-## Inspirations
+The application now directly derives from [sina-developer/LayoutFixer](https://github.com/sina-developer/LayoutFixer) at `969814d2dbb6819eaef984525ef11db4c3f48dca`. The import contains only the Windows C# app, required icon assets, EN/FA frequency lists, Webster word data and applicable notices. macOS code, promotional assets and prebuilt binaries are excluded.
 
-- **LayoutFixer** — https://github.com/sina-developer/LayoutFixer (Swift/macOS, MIT): bidirectional English/Persian wrong-layout detection, physical keycode translation, dictionary confidence and Tab-confirmed popup. We intend a Windows-native independent implementation.
-- **Filee** — https://github.com/KnifeLemon/Filee (C#/.NET/Avalonia, MIT): no-focus transparent floating window patterns, tray, themes, user settings, Windows UI drawing. Its file-conversion engine and visual assets are not part of LAYFIX.
+[The manifest](../provenance/upstream-import.json) records upstream paths, destination paths, byte counts, Git blob SHA-1 and SHA-256. [The import commit](../provenance/import-commit.txt) preserves every imported blob verbatim; later commits contain hardening and LAYFIX changes. Source history can be compared to the pinned upstream commit without conflating modifications with the import.
 
-## Licensing warning
+The former Avalonia/Filee-inspired implementation direction is superseded; PR #2 is not copied or used as a base. Filee remains only a historical design reference, with no imported code/assets/dependency in this migration.
 
-LayoutFixer states that **Resources/en_50k.txt** and **Resources/fa_50k.txt** come from hermitdave/FrequencyWords and are licensed **Creative Commons Attribution-ShareAlike 4.0**, separate from LayoutFixer's MIT source license. These resources are not approved to be copied into LAYFIX simply because source files have MIT headers.
-
-GitHub source is public but that does not waive attribution, trademark or dependency conditions. For actual copied source, retain license notices and document exact upstream revision/path. For dictionaries/assets, separately review compatible license/distribution requirements before committing.
-
-## Provenance record (to complete when reusing material)
-
-For every reused artifact record: upstream repository, upstream commit hash and file path; content included/modified; license SPDX identifier and license text; required attribution and notices; security review; date/owner approval. Third-party material must be auditable.
-
-## Current bootstrap state
-
-No external source files, fonts, images, trademarks, code snippets or word lists have been copied. This document records design inspiration only.
+See [third-party notices](../THIRD_PARTY_NOTICES.md) for MIT, CC BY-SA 4.0 frequency data and Webster status. Dataset authorship, source links, license and no-change statements must accompany redistribution. Do not attribute third-party dictionary data to LAYFIX or apply the code's MIT notice to those datasets.

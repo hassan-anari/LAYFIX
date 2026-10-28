@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../windows/src/Native.cs" Link="Native.cs" />
+    <Compile Include="../../windows/src/Layouts.cs" Link="Layouts.cs" />
+    <Compile Include="../../windows/src/Safety.cs" Link="Safety.cs" />
+    <Compile Include="../LayoutFixer.Tests/TestRunner.cs" Link="TestRunner.cs" />
+  </ItemGroup>
+</Project>

@@ -1,79 +1,35 @@
 # Technical Architecture
 
-## Technology and system boundaries
+Phase 1 adopts the actual upstream Windows C# / .NET 10 application, pinned at `969814d2dbb6819eaef984525ef11db4c3f48dca`. Windows Forms retains the working tray and non-activating popup. Avalonia and the rejected PR #2 implementation are not part of this migration.
 
-- C# and .NET 10; Avalonia Desktop for application UI and composition.
-- Native Windows interoperability isolated behind interfaces; use Win32, UI Automation and Text Services Framework (TSF) selectively.
-- Single resident user-session process, unprivileged by default; no driver, service, system-wide DLL injection or external daemon.
-- Avoid unnecessary third-party code; maintain small auditable dependencies.
-
-## Planned solution structure
-
-~~~text
+```text
 Layfix.slnx
-src/
-  Layfix.App/        Avalonia app, floating widget, settings, tray, popups, composition
-  Layfix.Core/       Pure models, mappings, detection rules, state machines, settings schema
-  Layfix.Windows/    Window focus, layout provider, input hook, UIA, TSF, Win32 interop
-tests/
-  Layfix.Core.Tests/
-  Layfix.Windows.Tests/
-docs/
-.github/workflows/
-~~~
+windows/LayoutFixer.Windows.csproj
+windows/src/Program.cs        tray, startup preference and explicit --test detector
+windows/src/Dictionaries.cs   upstream conservative frequency classifier, normalization
+windows/src/Fixer.cs          upstream word/run rules, suggestion and acceptance lifecycle
+windows/src/Layouts.cs        physical mapping and focused-thread layout boundaries
+windows/src/Popup.cs          retained WinForms popup, native caret geometry only
+windows/src/Native.cs         Win32 ABI and interop declarations
+windows/src/Safety.cs         privacy policy, context/edit contracts, hook ownership gate
+Resources/                   unchanged English/Persian frequency datasets
+windows/data/words.txt        unchanged Webster data
+provenance/                   original hashes and import commit
+licenses/                    upstream MIT and CC BY-SA legal text
+tests/LayoutFixer.Tests/      production-source deterministic regression executable
+tests/LayoutFixer.NativeTests/ Windows native API regression executable
+```
 
-Do not introduce empty or fake buildable projects in bootstrap; create them in Phase 1 with real tests.
+`Dictionaries.IsMistake` retains upstream ranks, the 30,000-word Persian cutoff, English/Webster protection, minimum-letter and short-predecessor rules. Normalization now composes Unicode canonically and rejects unknown language tags. Required datasets cannot silently disappear. No independent replacement algorithm or cloud detection is introduced.
 
-## Components and responsibilities
+`Fixer` retains physical key records, previous word, suggested run and the 12-word extension rule. Its platform dependencies are injected: layout access, popup, timer and `ICorrectionBoundary`. Context identity includes foreground HWND, focused HWND/thread, exact HKL and generation. Unknown, sensitive, stale, changed-layout, changed-focus, timeout, unsupported-mapping, shortcut, injected and Backspace events clear the run. Caps Lock is recorded with Shift per key. Buffers are bounded; pause/disposal immediately drop references to text. Managed strings are not guaranteed to be overwritten in memory.
 
-**LanguageStateService**: retrieve foreground HWND and target thread; derive active input locale/layout from target thread where possible, reconcile state after external shortcuts, expose Unknown explicitly. Switching is a request to the appropriate target, then an independently verified readback. Calls such as GetForegroundWindow, GetWindowThreadProcessId, GetKeyboardLayout, and WM_INPUTLANGCHANGEREQUEST are candidate mechanisms. TSF-aware apps may require a more specific adapter; unsupported cases must be reported, not forced.
+`Layout.Character` resolves scan codes through the destination HKL and uses `ToUnicodeEx` with the no-state-change flag. Multiple installed variants are retained. An ambiguous opposite-layout choice returns Unknown instead of picking the first. Dead/unmapped/control/invalid UTF-16 outputs cancel conversion. A selected profile UI is deferred; no locale identity is guessed from the process thread when focus lookup fails.
 
-**InputObservationService**: optional low-level keyboard monitoring, strictly bounded buffer, cancellation on unsafe context, reentrancy-tagged synthetic events, minimal work inside hook callback. Pure events are delivered to a state machine without logging source text. Use WH_KEYBOARD_LL only with bounded callback latency and explicit lifecycle management.
+The old Backspace/SendInput replacement implementation is removed. `ICorrectionBoundary.TryValidateSpan` must establish the exact expected span, caret/selection, revision and context without crossing privacy/integrity boundaries; `Replace` must atomically compare and replace that span, without Backspace or clipboard fallback. The coordinator rechecks context immediately before the operation. Rejected edits preserve Tab; failed/partial edits never switch layouts, partial results latch a fault without retry, and switching is only requested after confirmed success in the same context. A real adapter must also revalidate the layout-switch target internally. These contracts are tested using deterministic fakes; no production editor adapter is claimed.
 
-**LayoutMappingService**: translate physical key events under source/target active layouts including modifiers, variant IDs, punctuation, dead keys and Unicode. Windows ToUnicodeEx is a candidate, but dead-key/state side effects must be mitigated and verified. Never assume every layout pair is invertible.
+**Shipping gate:** `TrayApp` installs no keyboard, mouse or foreground hooks, creates no Fixer text buffer and makes no UIA calls. Global observation and rewriting remain blocked until an independently reviewed adapter establishes all privacy facts and safe edit semantics. This is a deliberate unresolved Phase 1 blocker. The popup and corrected engine are retained for adapter integration, rather than presented as working cross-app functionality.
 
-**CorrectionEngine**: deterministic pure input-to-output conversion and dictionary/context scoring. It returns a *proposed* correction and confidence; it cannot perform I/O or mutate the user document.
+`HookLifetime` provides transactional registration and reverse-order idempotent cleanup. It is exercised by native API smoke tests; production does not currently register hooks. Any future callback must do constant bounded work and enqueue only eligible events, never await a provider or edit inline. The old popup background UIA tasks and continuations have been removed; no stale continuations can show a dismissed popup.
 
-**EditSessionCoordinator**: safe commit boundary. Snapshot target identity, layout, selection/caret and a limited observable text span. Just before editing, recheck preconditions; reject changed/unsupported context. An adapter performs the smallest supported edit via verified platform surface and reports success/failure. Revalidate outcome where possible; do not blindly send N backspaces based solely on a stale keyboard buffer.
-
-**SuggestionStateMachine**: deterministic states Idle -> Collecting -> Suggested -> Applying/Dismissed -> Idle, with stale-context, timeout, manual interruption and focus-change guards. In particular, Tab is only consumed while Suggested and the context token still matches.
-
-**FloatingWidgetService**: a non-activating overlay plus tray settings. Ownership and pointer activation/focus behavior must be tested on real Windows. Multi-display position normalization, per-monitor DPI and accessibility controls are mandatory.
-
-**PreferencesService**: versioned schema, migrations, atomic persistence under per-user app data, strongly validated values and recovery from malformed files. Does not persist observed text.
-
-**DiagnosticsService**: sanitized opt-in technical events, privacy filters, capped local retention, easy reset/disable.
-
-## Correctness and privacy boundaries
-
-- Never treat a global key hook as evidence that the foreground control is editable or non-sensitive. Require an independent focused-control safety verdict; Unknown => no monitoring/correction.
-- IsPassword and UIA support are imperfect: protect web password fields, OS secure desktops and hidden input using conservative gates and exclusions; only extend support when verified.
-- Key observation must ignore self-injected events. Avoid hook reentrancy, input races and UI thread dispatch in hook callback.
-- Synthetic input is constrained by Windows security boundaries and foreground ownership; do not bypass UIPI.
-- No clipboard replacement by default. A future explicit clipboard strategy would require consent, atomic snapshot/restore, conflict protection and independent tests.
-- Separate lookup, suggestion and mutation flows so a failed read or permission gap never escalates to unsafe deletion.
-
-## Async/concurrency design
-
-- UI binds to a serialized language/suggestion state stream; render on UI dispatcher.
-- Hook callbacks enqueue compact events and return immediately; no file I/O, UIA calls, dictionaries loading or synchronous render in callback.
-- Long operations are cancellable; focus/layout changes invalidate outstanding proposals by monotonically increasing context generation.
-- System state is authoritative; the floating UI never optimistically displays FA/EN as confirmed before readback.
-
-## UI/OS design
-
-- Default theme/accent inherited from Windows with user override. Mica for appropriate app surfaces on Windows 11; Acrylic/translucent popup only where supported; solid readable fallback otherwise.
-- Never assert Windows 10 Mica support. Respect transparency/high contrast/reduced motion and remote desktop composition limitations.
-- Window HWND ex-styles (e.g., no-activate) and Avalonia ShowActivated=false behavior must be verified empirically for pointer click without focus loss.
-- No window stealing foreground focus for input switching, tooltip, popup or notification.
-
-## Risks and mitigations
-
-1. **Per-thread language state**: target HWND-thread lookup, readback, Unknown status.
-2. **Unsafe global edits**: fail-closed context validation, no blind destructive fallback, abort on race.
-3. **Sensitive input**: conservative focused-control policy and explicit exclusions.
-4. **Cross-app variance**: adapter capability matrix and honest unsupported outcomes.
-5. **Hook performance**: constant-time callback, bounded buffers, timing instrumentation without sensitive content.
-6. **Transparent surface compatibility**: solid fallback, native smoke tests, reduced effects.
-
-Use [Quality Gates](QUALITY_GATES.md) for test strategy and [Decisions](DECISIONS.md) for unresolved choices.
+No runtime third-party NuGet dependencies are added. SDK, Actions and dependency lock files are pinned. The CI package is a self-contained unsigned win-x64 folder with dictionaries, license notices, original checksums and build provenance. It is not a production release. Final switcher/settings UI and Phase 2 are excluded.

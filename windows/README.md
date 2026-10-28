@@ -1,35 +1,7 @@
-# LayoutFixer for Windows
+# LAYFIX Windows audit build
 
-The Windows version of LayoutFixer: same idea, same rules, same Tab-to-fix popup, living in the
-system tray instead of the menu bar.
+Derived from LayoutFixer Windows at `969814d2dbb6819eaef984525ef11db4c3f48dca`. The verbatim import is recorded separately in `../provenance/import-commit.txt`; later commits are LAYFIX changes. Build/test/package instructions are in the repository README and development workflow.
 
-**Install:** see the [Windows install guide](../README.md#windows) in the main README.
+The retained tray and explicit `LayoutFixer.exe --test "sample"` detector run offline. Global observation, live popup acceptance, cross-application edits and post-correction layout switching are BLOCKED pending secure-control and atomic-span adapter acceptance. No global hooks are installed by the shipping process. Core engine behavior remains in source and is tested through injected boundaries. This is not production-ready and Phase 1 acceptance remains incomplete.
 
-## How it differs from the Mac version
-
-| | Mac | Windows |
-|---|---|---|
-| Watches typing | event tap | low-level keyboard hook |
-| Popup position | Accessibility API | Win32 caret, then UI Automation, then the mouse pointer |
-| Switches layout | input source API | asks the focused window to change its input language |
-| Permission | Accessibility | none |
-
-## Code
-
-```
-src/Program.cs        entry point, tray icon, keyboard and mouse hooks, --test mode
-src/Fixer.cs          tracks typing, decides when to suggest, retypes on Tab
-src/Dictionaries.cs   the "real word" rules (same as the Mac app)
-src/Layouts.cs        installed English/Persian layouts and key-to-character mapping
-src/Popup.cs          the suggestion popup and caret lookup
-src/Native.cs         Win32 calls
-data/words.txt        Webster's word list (public domain); the other lists come from ../Resources
-```
-
-## Build
-
-Needs the .NET 10 SDK. It compiles on macOS and Linux too, but only runs on Windows.
-
-```bash
-dotnet publish windows/LayoutFixer.Windows.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
-```
+Portable output contains its .NET runtime, three dictionaries, required icons, provenance and MIT/CC BY-SA notices. No separate .NET install is required on an end-user PC. Extract the complete ZIP. See `../docs/SECURITY_AUDIT.md` and `../THIRD_PARTY_NOTICES.md` before using or redistributing it. No installer, release, automatic merge or Phase 2 is included.

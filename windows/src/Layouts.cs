@@ -1,57 +1,105 @@
 namespace LayoutFixer;
 
-/// An installed keyboard layout we know how to fix between (English or Persian).
-sealed record Layout(IntPtr Hkl, string Lang)
+interface IKeyboardMapping
+{
+    uint VirtualKey(uint scan, nint hkl);
+    string? Translate(uint vk, uint scan, bool shift, bool capsLock, nint hkl);
+}
+
+sealed class WindowsKeyboardMapping : IKeyboardMapping
+{
+    public uint VirtualKey(uint scan, nint hkl) => Native.MapVirtualKeyEx(scan, 3, hkl);
+
+    public string? Translate(uint vk, uint scan, bool shift, bool capsLock, nint hkl)
+    {
+        var state = new byte[256];
+        if (shift) state[0x10] = 0x80;
+        if (capsLock) state[0x14] = 1;
+        var buffer = new char[16];
+        // Do not mutate the caller's dead-key state (Windows 10 1607+).
+        int n = Native.ToUnicodeEx(vk, scan, state, buffer, buffer.Length, 4, hkl);
+        return n > 0 && n < buffer.Length ? new string(buffer, 0, n) : null;
+    }
+}
+
+/// The physical scan code is resolved in the destination layout, retaining Shift/Caps.
+sealed record Layout(nint Hkl, string Lang, IKeyboardMapping? Mapping = null)
 {
     public string DisplayName => Lang == "fa" ? "فارسی" : "English";
-
-    /// The character this layout produces for a physical key.
-    public string? Character(uint vk, uint scan, bool shift)
+    public string? Character(uint vk, uint scan, bool shift, bool capsLock = false)
     {
-        var keyState = new byte[256];
-        if (shift) keyState[0x10] = 0x80;
-        var buf = new char[8];
-        // Flag 0x4: don't touch the keyboard's dead-key state while asking.
-        int n = Native.ToUnicodeEx(vk, scan, keyState, buf, buf.Length, 0x4, Hkl);
-        return n > 0 ? new string(buf, 0, n) : null;
+        var api = Mapping ?? new WindowsKeyboardMapping();
+        uint physicalVk = scan == 0 ? vk : api.VirtualKey(scan, Hkl);
+        if (physicalVk == 0 || Hkl == 0) return null;
+        var result = api.Translate(physicalVk, scan, shift, capsLock, Hkl);
+        if (string.IsNullOrEmpty(result) || result.Any(char.IsControl)) return null;
+        // Refuse malformed UTF-16; valid multi-unit/combining sequences remain intact.
+        for (int i = 0; i < result.Length; i++)
+            if (char.IsSurrogate(result[i]) &&
+                (!char.IsHighSurrogate(result[i]) || ++i >= result.Length || !char.IsLowSurrogate(result[i]))) return null;
+        return result;
     }
+}
+
+interface ILayoutPlatform
+{
+    IReadOnlyList<nint> Installed();
+    bool TryFocusedThread(out nint foreground, out nint focus, out uint thread);
+    nint KeyboardLayout(uint thread);
+}
+
+sealed class WindowsLayoutPlatform : ILayoutPlatform
+{
+    public IReadOnlyList<nint> Installed()
+    {
+        int n = Native.GetKeyboardLayoutList(0, null);
+        if (n <= 0 || n > 256) return [];
+        var list = new nint[n];
+        int actual = Native.GetKeyboardLayoutList(n, list);
+        return actual > 0 && actual <= n ? list.Take(actual).ToArray() : [];
+    }
+
+    public bool TryFocusedThread(out nint foreground, out nint focus, out uint thread)
+    {
+        foreground = Native.GetForegroundWindow();
+        focus = 0;
+        thread = 0;
+        if (foreground == 0) return false;
+        var foregroundThread = Native.GetWindowThreadProcessId(foreground, out _);
+        if (foregroundThread == 0) return false;
+        var info = new Native.GUITHREADINFO { cbSize = System.Runtime.InteropServices.Marshal.SizeOf<Native.GUITHREADINFO>() };
+        if (!Native.GetGUIThreadInfo(foregroundThread, ref info) || info.hwndFocus == 0) return false;
+        focus = info.hwndFocus;
+        thread = Native.GetWindowThreadProcessId(focus, out _);
+        return thread != 0 && Native.GetForegroundWindow() == foreground;
+    }
+
+    public nint KeyboardLayout(uint thread) => thread == 0 ? 0 : Native.GetKeyboardLayout(thread);
 }
 
 static class Layouts
 {
-    const int LangPersian = 0x29, LangEnglish = 0x09;
+    public static string? LangOf(nint hkl) => ((long)hkl & 0x3FF) switch { 0x29 => "fa", 0x09 => "en", _ => null };
 
-    static string? LangOf(IntPtr hkl)
+    public static IReadOnlyList<Layout> All(ILayoutPlatform? platform = null) =>
+        (platform ?? new WindowsLayoutPlatform()).Installed().Distinct()
+        .Where(h => h != 0 && LangOf(h) is not null).Select(h => new Layout(h, LangOf(h)!)).ToArray();
+
+    // Multiple opposite variants require explicit future profile selection. Never pick the first.
+    public static Layout? Other(Layout current, ILayoutPlatform? platform = null)
     {
-        int primary = (int)((long)hkl & 0x3FF);
-        return primary == LangPersian ? "fa" : primary == LangEnglish ? "en" : null;
+        var candidates = All(platform).Where(l => l.Lang != current.Lang).ToArray();
+        return candidates.Length == 1 ? candidates[0] : null;
     }
 
-    /// Installed English and Persian layouts, one per language.
-    public static Dictionary<string, Layout> Enabled()
+    public static Layout? Current(ILayoutPlatform? platform = null)
     {
-        int n = Native.GetKeyboardLayoutList(0, null);
-        var list = new IntPtr[n];
-        Native.GetKeyboardLayoutList(n, list);
-        var result = new Dictionary<string, Layout>();
-        foreach (var hkl in list)
-            if (LangOf(hkl) is { } lang && !result.ContainsKey(lang)) result[lang] = new Layout(hkl, lang);
-        return result;
+        var api = platform ?? new WindowsLayoutPlatform();
+        if (!api.TryFocusedThread(out var foreground, out var focus, out var thread) || foreground == 0 || focus == 0 || thread == 0) return null;
+        var hkl = api.KeyboardLayout(thread);
+        return hkl != 0 && LangOf(hkl) is { } lang ? new Layout(hkl, lang) : null;
     }
 
-    /// The layout of the window you're typing in. Uses the window with keyboard focus when Windows
-    /// reports one: in hosted windows (Store apps, some editors) the foreground window's own thread
-    /// can report a different layout than the one you're typing with.
-    public static Layout? Current()
-    {
-        var foreground = Native.GetForegroundWindow();
-        uint thread = Native.GetWindowThreadProcessId(foreground, out _);
-        var info = new Native.GUITHREADINFO { cbSize = System.Runtime.InteropServices.Marshal.SizeOf<Native.GUITHREADINFO>() };
-        if (Native.GetGUIThreadInfo(thread, ref info) && info.hwndFocus != IntPtr.Zero)
-            thread = Native.GetWindowThreadProcessId(info.hwndFocus, out _);
-        var hkl = Native.GetKeyboardLayout(thread);
-        return LangOf(hkl) is { } lang ? new Layout(hkl, lang) : null;
-    }
-
-    public static Layout? Other(Layout current) => Enabled().Values.FirstOrDefault(l => l.Lang != current.Lang);
+    public static Dictionary<string, Layout> Enabled() => All().GroupBy(l => l.Lang)
+        .Where(g => g.Count() == 1).ToDictionary(g => g.Key, g => g.Single());
 }

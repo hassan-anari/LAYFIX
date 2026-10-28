@@ -1,45 +1,26 @@
 # Security and Privacy Contract
 
-LAYFIX can observe keyboard events, a uniquely sensitive privilege. Privacy-by-design and text integrity are release blockers, not optional polish.
+LAYFIX includes an approved, privacy-restricted keyboard observation and correction component derived from LayoutFixer Windows. This component remains disabled in the audit build until real secure-control and atomic-span editor adapters pass acceptance. See [Security Audit](SECURITY_AUDIT.md) for findings, mitigations and unresolved blockers. Do not describe a policy predicate or mocked adapter as Windows secure-field detection.
 
-## Default privacy guarantees
+- Core behavior is offline. No telemetry, cloud model/API, key analytics, content logs, clipboard fallback or undisclosed network activity.
+- Never persist/transmit typed text, passwords, selected text, clipboard contents, document/window titles or keystroke runs. Caller-supplied `--test` samples are explicit diagnostic input and may be printed; do not use private data there.
+- Independently establish control sensitivity/editability, focused HWND/thread, foreground identity, default desktop, integrity and session status before accepting any textual event. Password/sensitive/unknown/unsupported/remote contexts fail closed. Windows does not universally hide password keystrokes from low-level hooks.
+- Keep eligible text only in bounded volatile buffers, clear references on pause, failure, timeout, focus/layout/caret change and shutdown. Managed strings are not guaranteed to be overwritten in memory.
+- Destructive edits require a visible exact-context suggestion, explicit confirmation and an adapter that atomically validates the actual span/revision at mutation. No generic Backspace deletion, privileged injection or implicit clipboard strategy.
+- Validate input/edit results; no blind retry or layout switch after failure. Partial uncertainty disables the session. Layout switching must target the same verified editor and independently verify readback.
+- Do not call unbounded UIA providers or perform dictionary/I/O/UI work in keyboard callbacks. Pending events and async work must carry invalidatable context generations. Dispose timers/forms/subscriptions and roll back partially registered hooks.
+- Current shipping policy installs no keyboard/mouse/foreground hooks, starts no text engine and makes no UIA provider calls. It cannot intercept Tab/Esc, observe secure-field typing or modify another application. This is a feature blocker, not proof that an unimplemented detector is safe.
 
-- Fully offline keyboard observation, layout conversion, and widget functionality.
-- No stored/reported raw key events, plain text typed by the user, selected content, clipboard contents, passwords or rich window content.
-- No key stream analytics, cloud detection, telemetry SDK, hidden background uploads or network fallback.
-- Volatile bounded buffers only when observation is enabled and focused control is confirmed safe; wipe on pause, app change, desktop lock, error, stale context or shutdown.
-- Sanitized diagnostic events are local-only, opt-in and capped with a clear erase control. Include only status codes, non-sensitive supported-app identifiers (if opted in) and performance summaries.
-- Disable correction in protected/secure/password contexts and whenever safe-text eligibility cannot be established. Global keyboard hook presence alone is not a safety signal.
-- Do not run as administrator or bypass the integrity level boundary to modify elevated or protected applications.
+## Storage and diagnostics
 
-## Threat model
+Only the existing explicit Start with Windows registry preference is retained. No observed-text storage, dictionary learning, diagnostics traces, new settings database or exclusion-profile persistence is introduced. No error trace may include content. Adding diagnostics later requires sanitized status codes and opt-in bounded retention.
 
-- **Password/private text exposure** through global hooks, UIA, logs, crash dumps or clipboard. Mitigation: conservative observation gate, volatile buffer, no content logs, exclusion list, sanitized crash output.
-- **Destructive edits** from stale focus, caret movement, app-specific editors, race with async popup, or missed events. Mitigation: context token, readback validation, capability checks, abort rather than guess.
-- **Synthetic input loops** and stolen shortcuts. Mitigation: recognized injection tagging, Tab only in eligible suggestion state, hook timing bounds, feature pause.
-- **Clipboard replacement/leak**. Mitigation: no implicit clipboard fallback. Future optional adapter requires consent and bounded tested restore.
-- **Untrusted dependencies/CI artifacts**. Mitigation: least-privilege jobs, pinned/approved dependencies, code review, no credential-bearing artifact, reproducible release metadata.
-- **Misleading OS language status**. Mitigation: state derived from foreground target and verified after switch; Unknown and Failure visible.
+## Dependencies and licenses
 
-## Storage
+All imported code/data/assets require traceable provenance. Preserve the upstream MIT notice; FrequencyWords English/Persian datasets are separately CC BY-SA 4.0 and remain unchanged, with credit to Hermit Dave/OpenSubtitles, legal text, source URLs, change status and no added restrictions/DRM. Redistributed adapted datasets require a compatible share-alike license. Webster data is public domain according to the pinned upstream notice; document that reliance and jurisdiction limits. See [third-party notices](../THIRD_PARTY_NOTICES.md).
 
-A versioned preferences file may store widget geometry, accent preference, shortcuts, selected language profile, per-app exclusion identifiers and local diagnostics consent. It must not store textual input. File is written atomically under per-user application data. Sensitive exception traces are never emitted.
+The migration request explicitly authorizes importing these datasets and building a review artifact after documenting obligations. It does not choose an overall production license for original LAYFIX additions. No copied macOS/promotional assets or upstream binaries are permitted.
 
-## Communications
+## Disclosure and release gate
 
-Core app makes zero network calls. Optional update check belongs to later phase, is disabled by default until approved, uses only HTTPS and publishes an understandable privacy notice. No automatic self-update or undisclosed remote commands.
-
-## Dependency and license policy
-
-- New packages require pinned/versioned dependency entry, security review, license compatibility and explicit rationale.
-- LayoutFixer and Filee repositories are MIT, but LayoutFixer's bundled FrequencyWords dictionaries are **CC BY-SA 4.0**, not MIT; do not copy/bundle them until license/attribution/distribution obligations are analyzed and accepted.
-- Do not use code, logos, screenshots or resource files from references without proper license attribution.
-- Repository owner must choose LAYFIX's own license before public distribution; third-party MIT licenses do not automatically license original LAYFIX code.
-
-## Disclosure and vulnerability handling
-
-Do not put security-sensitive input traces in public GitHub issues. Submit sanitized reproduction steps and technical conditions only; coordinate any sensitive report privately with the repository maintainer.
-
-## Required security acceptance
-
-Test excluded/password fields, blocked/elevated foreground, stale focus/selection, synthetic reentrancy, runtime pause and resume, hook teardown, disabled network, corrupted preferences, accidental log leakage, and artifact provenance. Any confirmed text loss or sensitive recording is a stop-ship P0.
+Do not post sensitive input traces to issues or PRs. Use sanitized reproduction conditions. Any actual sensitive collection or text loss is a stop-ship P0. Before enabling observation, complete secure/unknown/elevated/remote/lock tests, exact-span/caret/focus races, failed/partial edit tests, normal navigation, cleanup and packaged offline validation. All interactive checks remain **NOT RUN** until evidence is recorded.

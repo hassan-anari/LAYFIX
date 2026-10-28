@@ -26,19 +26,19 @@ sealed class Dictionaries
     static Dictionary<string, int> Load(string path)
     {
         var ranks = new Dictionary<string, int>();
-        if (!File.Exists(path)) return ranks;
+        if (!File.Exists(path)) throw new FileNotFoundException("Required frequency dictionary missing", path);
         int i = 0;
         foreach (var line in File.ReadLines(path, Encoding.UTF8))
         {
-            var word = line.Split(' ')[0];
-            ranks.TryAdd(Normalize(word), i++);
+            var word = Normalize(line.Split(' ')[0]);
+            if (word.Length > 0) ranks.TryAdd(word, i++);
         }
         return ranks;
     }
 
     public static string Normalize(string s)
     {
-        s = s.ToLowerInvariant().Replace('ي', 'ی').Replace('ك', 'ک');
+        s = s.Normalize(NormalizationForm.FormC).ToLowerInvariant().Replace('ي', 'ی').Replace('ك', 'ک');
         int start = 0, end = s.Length;
         static bool Trim(char c) => char.IsPunctuation(c) || char.IsSymbol(c) || char.IsWhiteSpace(c);
         while (start < end && Trim(s[start])) start++;
@@ -52,6 +52,7 @@ sealed class Dictionaries
     /// minLetters guards against short words, which are often ambiguous (شد is "an" on English keys).
     public bool IsMistake(string typed, string typedLang, string converted, int minLetters = 3)
     {
+        if (typedLang is not ("fa" or "en")) return false;
         if (typedLang == "fa")
         {
             // Typed on Persian keys: the English reading must be a common English word,

@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="windows/LayoutFixer.Windows.csproj" />
+  <Project Path="tests/LayoutFixer.Tests/LayoutFixer.Tests.csproj" />
+  <Project Path="tests/LayoutFixer.NativeTests/LayoutFixer.NativeTests.csproj" />
+</Solution>

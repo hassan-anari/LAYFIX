@@ -1,14 +1,11 @@
 using System.Drawing;
-using System.Windows.Automation;
-using System.Windows.Automation.Text;
 
 namespace LayoutFixer;
 
 /// The suggestion bubble next to the text cursor. It never takes focus and clicks pass through it.
-sealed class Popup : Form
+sealed class Popup : Form, ISuggestionPopup
 {
     readonly Label title = new(), hint = new();
-    int generation;
 
     public Popup()
     {
@@ -63,16 +60,14 @@ sealed class Popup : Form
 
     public void ShowSuggestion(string suggestion, string target)
     {
+        if (IsDisposed) return;
+        if (InvokeRequired) throw new InvalidOperationException("Popup requires its owning UI thread");
         title.Text = suggestion;
         title.RightToLeft = suggestion.Any(c => c >= 0x0600 && c <= 0x06FF) ? RightToLeft.Yes : RightToLeft.No;
         hint.Text = $"Tab: fix & switch to {target}    ·    Esc: ignore";
-        // Finding the caret can be slow in some apps, so do it off the UI thread.
-        int gen = ++generation;
-        Task.Run(Caret.Find).ContinueWith(t =>
-        {
-            if (gen != generation || IsDisposed) return;
-            BeginInvoke(() => Place(t.Result));
-        });
+        // No asynchronous UIA provider calls or stale continuations. This popup is only
+        // used after an approved editor supplies an eligible context (none ship yet).
+        Place(Caret.Find());
     }
 
     void Place(Rectangle? caret)
@@ -80,7 +75,7 @@ sealed class Popup : Form
         var anchor = caret ?? new Rectangle(Cursor.Position, Size.Empty);
         var screen = Screen.FromPoint(anchor.Location).WorkingArea;
         var size = PreferredSize;
-        int x = Math.Clamp(anchor.Left, screen.Left + 4, screen.Right - size.Width - 4);
+        int x = Math.Clamp(anchor.Left, screen.Left + 4, Math.Max(screen.Left + 4, screen.Right - size.Width - 4));
         int y = anchor.Bottom + 6;
         if (y + size.Height > screen.Bottom) y = anchor.Top - size.Height - 6;
         Location = new Point(x, y);
@@ -89,7 +84,6 @@ sealed class Popup : Form
 
     public void HideIt()
     {
-        generation++;
         if (Visible) Hide();
     }
 }
@@ -108,33 +102,7 @@ static class Caret
             if (Native.ClientToScreen(info.hwndCaret, ref p))
                 return new Rectangle(p.X, p.Y, Math.Max(1, info.rcCaret.Right - info.rcCaret.Left), Math.Max(1, info.rcCaret.Bottom - info.rcCaret.Top));
         }
-        // 2. UI Automation (browsers, modern apps).
-        try
-        {
-            var element = AutomationElement.FocusedElement;
-            if (element?.TryGetCurrentPattern(TextPattern.Pattern, out var pattern) == true)
-            {
-                var selection = ((TextPattern)pattern).GetSelection();
-                if (selection.Length > 0)
-                {
-                    var range = selection[0];
-                    var rects = range.GetBoundingRectangles();
-                    if (rects.Length == 0)
-                    {
-                        var wider = range.Clone();
-                        wider.MoveEndpointByUnit(TextPatternRangeEndpoint.Start, TextUnit.Character, -1);
-                        rects = wider.GetBoundingRectangles();
-                    }
-                    if (rects.Length > 0)
-                    {
-                        var r = rects[^1];
-                        return new Rectangle((int)r.Right, (int)r.Top, 1, Math.Max(1, (int)r.Height));
-                    }
-                }
-            }
-        }
-        catch { /* app doesn't support it */ }
-        // 3. Fall back to the mouse pointer.
+        // Unsupported caret providers are not queried for private text or selection.
         return null;
     }
 }

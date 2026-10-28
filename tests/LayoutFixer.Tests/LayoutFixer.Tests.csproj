@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../windows/src/Dictionaries.cs" Link="Engine/Dictionaries.cs" />
+    <Compile Include="../../windows/src/Fixer.cs" Link="Engine/Fixer.cs" />
+    <Compile Include="../../windows/src/Layouts.cs" Link="Engine/Layouts.cs" />
+    <Compile Include="../../windows/src/Native.cs" Link="Engine/Native.cs" />
+    <Compile Include="../../windows/src/Safety.cs" Link="Engine/Safety.cs" />
+    <Content Include="../../Resources/*.txt" Link="data/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../windows/data/words.txt" Link="data/words.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
